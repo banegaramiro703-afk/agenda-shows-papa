@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agenda Papá 🎸</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background-color: #0f172a; color: white; font-family: sans-serif; }
+        .card { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; }
+    </style>
+</head>
+<body class="p-6 max-w-md mx-auto">
+
+    <header class="mb-10 text-center">
+        <h1 class="text-4xl font-extrabold text-cyan-400 italic">AGENDA PAPÁ 🎸</h1>
+    </header>
+
+    <div id="status" class="text-center my-10 text-slate-400">Cargando datos del Excel...</div>
+    <div id="lista-shows" class="space-y-6"></div>
+
+    <script>
+        // TU LINK DE API
+        const API_URL = 'https://sheetdb.io/api/v1/d1yjr4l7r3o7q';
+
+        async function cargarShows() {
+            const container = document.getElementById('lista-shows');
+            const status = document.getElementById('status');
+            
+            try {
+                const response = await fetch(API_URL);
+                if (!response.ok) throw new Error("Error en SheetDB: " + response.status);
+                
+                const rawData = await response.json();
+                console.log("Datos recibidos:", rawData);
+
+                status.style.display = 'none';
+                container.innerHTML = '';
+
+                if (rawData.error) throw new Error(rawData.error);
+                if (rawData.length === 0) {
+                    container.innerHTML = '<p class="text-center">No hay shows cargados hoy.</p>';
+                    return;
+                }
+
+                rawData.forEach(item => {
+                    // Limpiador de títulos (para que no importen los espacios)
+                    const getVal = (nombre) => {
+                        const key = Object.keys(item).find(k => k.trim().toUpperCase() === nombre.toUpperCase());
+                        return item[key] || "";
+                    };
+
+                    const show = {
+                        evento: getVal('EVENTO'),
+                        fecha: getVal('FECHA'),
+                        hora: getVal('HORA'),
+                        lugar: getVal('LUGAR'),
+                        contacto: getVal('CONTACTO'),
+                        telefono: getVal('TELEFONO'),
+                        total: getVal('TOTAL'),
+                        pagado: getVal('PAGADO')
+                    };
+
+                    // Lógica para números y fechas
+                    const p = show.fecha.split('/');
+                    const fechaLink = p.length === 3 ? `${p[2]}${p[1]}${p[0]}` : "20260101";
+                    const limpiarMonto = (m) => parseInt(m.toString().split(',')[0].replace(/\D/g,'')) || 0;
+                    
+                    const t = limpiarMonto(show.total);
+                    const pg = limpiarMonto(show.pagado);
+                    const porcentaje = t > 0 ? (pg / t) * 100 : 0;
+
+                    container.innerHTML += `
+                        <div class="card p-6 shadow-2xl">
+                            <h2 class="text-xl font-bold uppercase text-white">${show.evento}</h2>
+                            <p class="text-cyan-400 text-sm font-semibold mb-4">📍 ${show.lugar}</p>
+                            
+                            <div class="text-slate-400 text-xs mb-6">
+                                📅 ${show.fecha} | 👤 ${show.contacto} | ⏰ ${show.hora}
+                            </div>
+
+                            <div class="space-y-2 mb-6 text-[10px] font-bold">
+                                <div class="flex justify-between text-slate-500">
+                                    <span>PAGADO: $${pg.toLocaleString()}</span>
+                                    <span>TOTAL: $${t.toLocaleString()}</span>
+                                </div>
+                                <div class="w-full bg-slate-900 h-2 rounded-full overflow-hidden">
+                                    <div class="bg-emerald-500 h-full" style="width: ${porcentaje}%"></div>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-4">
+                                <a href="https://wa.me/${show.telefono.replace(/\D/g,'')}" target="_blank" class="bg-emerald-600 text-center py-3 rounded-xl font-bold">WhatsApp</a>
+                                <a href="https://www.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(show.evento)}&dates=${fechaLink}T220000Z/${fechaLink}T235900Z" target="_blank" class="bg-blue-600 text-center py-3 rounded-xl font-bold">Calendario</a>
+                            </div>
+                        </div>
+                    `;
+                });
+            } catch (err) {
+                status.innerHTML = `<p class="text-red-500 font-bold">⚠️ ERROR: ${err.message}<br><small>Revisá que el Excel esté compartido y que el link de SheetDB sea correcto.</small></p>`;
+            }
+        }
+        cargarShows();
+    </script>
+</body>
+</html>
