@@ -10,7 +10,7 @@
         body { background-color: #0f172a; color: white; font-family: 'Inter', sans-serif; }
         .card { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; }
         .btn-excel { background: linear-gradient(90deg, #10b981 0%, #059669 100%); }
-        input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(1); } /* Hace el icono del calendario blanco */
+        input, select { background: #1e293b !important; border: 1px solid #334155 !important; color: white !important; }
     </style>
 </head>
 <body class="p-6 max-w-md mx-auto mb-10">
@@ -18,20 +18,46 @@
     <header class="mb-8 text-center">
         <h1 class="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500 italic uppercase tracking-tighter">Agenda Papá 🎸</h1>
         
-        <a href="https://docs.google.com/spreadsheets/d/1kd0WqimD8cMIVRa5quN11ONo09m_k_it9L-GnSSBfkM/edit?gid=243041279#gid=243041279" target="_blank" class="mt-6 inline-flex items-center justify-center w-full btn-excel text-white py-4 rounded-2xl font-bold text-sm shadow-lg shadow-emerald-900/40 transition-transform active:scale-95">
-            <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24"><path d="M14.5 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V7.5L14.5 2zM19 19H5V4h8v4h6v11zM7 10h10v2H7v-2zm0 4h10v2H7v-2z"/></svg>
-            GESTIONAR SHOWS (EXCEL)
-        </a>
+        <div class="grid grid-cols-2 gap-2 mt-6">
+            <button onclick="toggleFormulario()" class="btn-excel text-white py-3 rounded-xl font-bold text-xs shadow-lg shadow-emerald-900/40">
+                ➕ NUEVO SHOW
+            </button>
+            <a href="https://docs.google.com/spreadsheets/d/1kd0WqimD8cMIVRa5quN11ONo09m_k_it9L-GnSSBfkM/edit" target="_blank" class="bg-slate-700 text-white py-3 rounded-xl font-bold text-xs text-center">
+                👁️ VER EXCEL
+            </a>
+        </div>
     </header>
+
+    <section id="seccion-form" class="card p-6 mb-8 border-emerald-500/30 border hidden">
+        <h3 class="text-sm font-bold text-emerald-400 uppercase mb-4 tracking-widest">Registrar Nuevo Evento</h3>
+        <form id="form-evento" class="space-y-3">
+            <input type="text" id="f-evento" placeholder="Nombre del Evento" class="w-full p-3 rounded-xl text-sm" required>
+            <div class="grid grid-cols-2 gap-2">
+                <input type="date" id="f-fecha" class="p-3 rounded-xl text-sm" required>
+                <input type="time" id="f-hora" class="p-3 rounded-xl text-sm" required>
+            </div>
+            <input type="text" id="f-lugar" placeholder="Lugar / Dirección" class="w-full p-3 rounded-xl text-sm">
+            <div class="grid grid-cols-2 gap-2">
+                <input type="text" id="f-contacto" placeholder="Cliente" class="p-3 rounded-xl text-sm">
+                <input type="tel" id="f-tel" placeholder="WhatsApp" class="p-3 rounded-xl text-sm">
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+                <input type="number" id="f-total" placeholder="Total $" class="p-3 rounded-xl text-sm">
+                <input type="number" id="f-pagado" placeholder="Seña $" class="p-3 rounded-xl text-sm">
+            </div>
+            <button type="submit" id="btn-enviar" class="w-full bg-emerald-600 py-4 rounded-2xl font-black text-sm mt-4 uppercase tracking-widest shadow-lg">
+                Guardar en la Agenda
+            </button>
+        </form>
+    </section>
 
     <section class="card p-5 mb-8 border-cyan-500/30 border">
         <h3 class="text-sm font-bold text-cyan-400 uppercase mb-3 tracking-widest text-center">¿Fecha disponible? 📅</h3>
         <div class="flex gap-2">
-            <input type="date" id="input-fecha" class="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-cyan-500 text-white">
-            <button onclick="buscarFecha()" class="bg-cyan-600 hover:bg-cyan-500 px-4 py-2 rounded-xl font-bold text-sm transition-all">BUSCAR</button>
+            <input type="date" id="input-fecha" class="flex-1 rounded-xl px-4 py-2 text-sm">
+            <button onclick="buscarFecha()" class="bg-cyan-600 px-4 py-2 rounded-xl font-bold text-sm">BUSCAR</button>
         </div>
-        <div id="resultado-busqueda" class="mt-4 text-center font-bold text-sm hidden">
-            </div>
+        <div id="resultado-busqueda" class="mt-4 text-center font-bold text-sm hidden"></div>
     </section>
 
     <div id="status" class="text-center my-10 text-slate-400 italic font-medium animate-pulse">Sincronizando con la nube...</div>
@@ -39,113 +65,123 @@
 
     <script>
         const API_URL = 'https://sheetdb.io/api/v1/d1yjr4l7r3o7q';
-        let todosLosShows = []; // Variable global para guardar los datos
+        let todosLosShows = [];
+
+        function toggleFormulario() {
+            document.getElementById('seccion-form').classList.toggle('hidden');
+        }
 
         async function cargarShows() {
             const container = document.getElementById('lista-shows');
             const status = document.getElementById('status');
-            
             try {
                 const response = await fetch(API_URL);
-                todosLosShows = await response.json(); // Guardamos los datos para la búsqueda
-                
+                todosLosShows = await response.json();
                 status.style.display = 'none';
                 container.innerHTML = '';
-
                 if (!todosLosShows || todosLosShows.length === 0) {
-                    container.innerHTML = '<p class="text-center text-slate-500">No hay eventos cargados.</p>';
+                    container.innerHTML = '<p class="text-center text-slate-500">No hay eventos.</p>';
                     return;
                 }
-
                 todosLosShows.forEach(item => {
                     const getVal = (nombre) => {
                         const key = Object.keys(item).find(k => k.trim().toUpperCase() === nombre.toUpperCase());
                         return item[key] || "";
                     };
-
                     const show = {
-                        evento: getVal('EVENTO'),
-                        fecha: getVal('FECHA'),
-                        hora: getVal('HORA'),
-                        lugar: getVal('LUGAR'),
-                        contacto: getVal('CONTACTO'),
-                        telefono: getVal('TELEFONO'),
-                        total: getVal('TOTAL'),
-                        pagado: getVal('PAGADO'),
-                        estado: getVal('ESTADO DE PAGO')
+                        evento: getVal('EVENTO'), fecha: getVal('FECHA'), hora: getVal('HORA'),
+                        lugar: getVal('LUGAR'), contacto: getVal('CONTACTO'), telefono: getVal('TELEFONO'),
+                        total: getVal('TOTAL'), pagado: getVal('PAGADO'), estado: getVal('ESTADO DE PAGO')
                     };
-
                     if(!show.evento) return;
-
                     const p = show.fecha.split('/');
                     const fechaLink = p.length === 3 ? `${p[2]}${p[1]}${p[0]}` : "20260101";
                     const limpiar = (m) => parseInt(m.toString().split(',')[0].replace(/\D/g,'')) || 0;
-                    
                     const t = limpiar(show.total);
                     const pg = limpiar(show.pagado);
                     const pendiente = t - pg;
                     const porcentaje = t > 0 ? (pg / t) * 100 : 0;
 
                     container.innerHTML += `
-                        <div class="card p-6 shadow-2xl">
+                        <div class="card p-6 shadow-2xl mb-6">
                             <div class="flex justify-between items-start mb-4">
-                                <div class="max-w-[75%]">
-                                    <h2 class="text-xl font-bold text-white uppercase leading-tight tracking-tight">${show.evento}</h2>
-                                    <p class="text-cyan-400 text-sm font-bold mt-1">📍 ${show.lugar}</p>
-                                </div>
-                                <span class="bg-slate-800 text-cyan-300 text-[10px] font-black px-2 py-1 rounded-lg border border-cyan-900/50">${show.hora}</span>
+                                <div class="max-w-[75%]"><h2 class="text-xl font-bold uppercase leading-tight">${show.evento}</h2><p class="text-cyan-400 text-sm font-bold mt-1">📍 ${show.lugar}</p></div>
+                                <span class="bg-slate-800 text-cyan-300 text-[10px] font-black px-2 py-1 rounded-lg">${show.hora}</span>
                             </div>
-                            <div class="flex items-center text-slate-400 text-xs mb-6 font-medium">
-                                📅 ${show.fecha} | <span class="ml-1 text-slate-200 font-bold">👤 ${show.contacto}</span>
-                            </div>
+                            <div class="flex items-center text-slate-400 text-xs mb-6 font-medium">📅 ${show.fecha} | <span class="ml-1 text-slate-200 font-bold">👤 ${show.contacto}</span></div>
                             <div class="space-y-3 mb-6">
-                                <div class="flex justify-between text-[10px] font-black uppercase text-slate-500 tracking-widest">
-                                    <span>COBRADO: $${pg.toLocaleString('es-AR')}</span>
-                                    <span>TOTAL: $${t.toLocaleString('es-AR')}</span>
-                                </div>
-                                <div class="w-full bg-slate-900 h-3 rounded-full overflow-hidden p-[1px]">
-                                    <div class="bg-gradient-to-r from-emerald-500 to-cyan-400 h-full rounded-full transition-all duration-1000" style="width: ${porcentaje}%"></div>
-                                </div>
+                                <div class="flex justify-between text-[10px] font-black uppercase text-slate-500 tracking-widest"><span>COBRADO: $${pg.toLocaleString('es-AR')}</span><span>TOTAL: $${t.toLocaleString('es-AR')}</span></div>
+                                <div class="w-full bg-slate-900 h-3 rounded-full overflow-hidden p-[1px]"><div class="bg-gradient-to-r from-emerald-500 to-cyan-400 h-full rounded-full transition-all" style="width: ${porcentaje}%"></div></div>
                                 <div class="flex justify-between items-center text-[11px] font-bold">
                                     <span class="text-slate-400 italic">${show.estado}</span>
-                                    <p class="${pendiente > 0 ? 'text-orange-400' : 'text-emerald-400'} uppercase">
-                                        ${pendiente > 0 ? 'Falta: $' + pendiente.toLocaleString('es-AR') : '✓ TOTALMENTE PAGADO'}
-                                    </p>
+                                    <p class="${pendiente > 0 ? 'text-orange-400' : 'text-emerald-400'} uppercase">${pendiente > 0 ? 'Falta: $' + pendiente.toLocaleString('es-AR') : '✓ PAGADO'}</p>
                                 </div>
                             </div>
                             <div class="grid grid-cols-2 gap-4">
-                                <a href="https://wa.me/${show.telefono.replace(/\D/g,'')}" target="_blank" class="bg-emerald-600 text-white text-center py-4 rounded-2xl font-bold text-sm shadow-lg shadow-emerald-900/20">WhatsApp</a>
-                                <a href="https://www.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(show.evento)}&dates=${fechaLink}T210000Z/${fechaLink}T235900Z&details=Lugar: ${encodeURIComponent(show.lugar)}" target="_blank" class="bg-blue-600 text-white text-center py-4 rounded-2xl font-bold text-sm shadow-lg shadow-blue-900/20">Calendario</a>
+                                <a href="https://wa.me/${show.telefono.replace(/\D/g,'')}" target="_blank" class="bg-emerald-600 text-white text-center py-4 rounded-2xl font-bold text-sm">WhatsApp</a>
+                                <a href="https://www.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(show.evento)}&dates=${fechaLink}T210000Z/${fechaLink}T235900Z&details=Lugar: ${encodeURIComponent(show.lugar)}" target="_blank" class="bg-blue-600 text-white text-center py-4 rounded-2xl font-bold text-sm">Calendario</a>
                             </div>
                         </div>
                     `;
                 });
-            } catch (err) {
-                status.innerHTML = '<p class="text-red-500 font-bold">Error de conexión.</p>';
-            }
+            } catch (err) { status.innerHTML = 'Error de carga.'; }
         }
 
-        // FUNCIÓN DE BÚSQUEDA
+        // FUNCIÓN PARA GUARDAR DATOS (POST)
+        document.getElementById('form-evento').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('btn-enviar');
+            btn.innerHTML = "GUARDANDO...";
+            btn.disabled = true;
+
+            const f = document.getElementById('f-fecha').value.split('-');
+            const fechaFormateada = `${f[2]}/${f[1]}/${f[0]}`;
+
+            const nuevoShow = {
+                "EVENTO": document.getElementById('f-evento').value,
+                "FECHA": fechaFormateada,
+                "HORA": document.getElementById('f-hora').value,
+                "LUGAR": document.getElementById('f-lugar').value,
+                "CONTACTO": document.getElementById('f-contacto').value,
+                "TELEFONO": document.getElementById('f-tel').value,
+                "TOTAL": document.getElementById('f-total').value,
+                "PAGADO": document.getElementById('f-pagado').value
+            };
+
+            try {
+                const res = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ data: [nuevoShow] })
+                });
+
+                if (res.ok) {
+                    alert("¡Show guardado con éxito!");
+                    document.getElementById('form-evento').reset();
+                    toggleFormulario();
+                    cargarShows(); // Recargar la lista
+                }
+            } catch (err) {
+                alert("Hubo un error al guardar.");
+            } finally {
+                btn.innerHTML = "GUARDAR EN LA AGENDA";
+                btn.disabled = false;
+            }
+        });
+
         function buscarFecha() {
             const input = document.getElementById('input-fecha').value;
             const resDiv = document.getElementById('resultado-busqueda');
-            
             if (!input) return;
-
-            // Formatear la fecha del input (AAAA-MM-DD) a (DD/MM/AAAA) para comparar con Excel
             const [y, m, d] = input.split('-');
             const fechaBuscada = `${d}/${m}/${y}`;
-
-            // Buscar en el array de shows
             const showEncontrado = todosLosShows.find(item => {
                 const key = Object.keys(item).find(k => k.trim().toUpperCase() === 'FECHA');
                 return item[key] === fechaBuscada;
             });
-
             resDiv.classList.remove('hidden');
-
             if (showEncontrado) {
-                resDiv.innerHTML = `<span class="text-red-500">❌ OCUPADO: ${showEncontrado.EVENTO || 'Reservado'}</span>`;
+                resDiv.innerHTML = `<span class="text-red-500">❌ OCUPADO: ${showEncontrado.EVENTO || showEncontrado.evento || 'Reservado'}</span>`;
             } else {
                 resDiv.innerHTML = `<span class="text-emerald-400">✅ DISPONIBLE para el ${fechaBuscada}</span>`;
             }
