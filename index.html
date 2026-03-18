@@ -170,22 +170,44 @@
         });
 
         function buscarFecha() {
-            const input = document.getElementById('input-fecha').value;
-            const resDiv = document.getElementById('resultado-busqueda');
-            if (!input) return;
-            const [y, m, d] = input.split('-');
-            const fechaBuscada = `${d}/${m}/${y}`;
-            const showEncontrado = todosLosShows.find(item => {
-                const key = Object.keys(item).find(k => k.trim().toUpperCase() === 'FECHA');
-                return item[key] === fechaBuscada;
-            });
-            resDiv.classList.remove('hidden');
-            if (showEncontrado) {
-                resDiv.innerHTML = `<span class="text-red-500">❌ OCUPADO: ${showEncontrado.EVENTO || showEncontrado.evento || 'Reservado'}</span>`;
-            } else {
-                resDiv.innerHTML = `<span class="text-emerald-400">✅ DISPONIBLE para el ${fechaBuscada}</span>`;
-            }
-        }
+    const input = document.getElementById('input-fecha').value;
+    const resDiv = document.getElementById('resultado-busqueda');
+    
+    if (!input) return;
+
+    // 1. Desarmamos lo que eligió tu viejo en el calendario (YYYY-MM-DD)
+    const [y, m, d] = input.split('-');
+
+    // 2. Creamos las dos versiones posibles de fecha (con y sin ceros)
+    const fechaConCeros = `${d}/${m}/${y}`; // Ejemplo: 05/03/2026
+    const fechaSinCeros = `${parseInt(d)}/${parseInt(m)}/${y}`; // Ejemplo: 5/3/2026
+
+    // 3. Buscamos en la lista que bajamos del Excel
+    const showEncontrado = todosLosShows.find(item => {
+        const key = Object.keys(item).find(k => k.trim().toUpperCase() === 'FECHA');
+        const valorExcel = item[key] ? item[key].toString().trim() : "";
+        
+        // Comparamos: ¿Es igual a la versión con ceros O a la versión sin ceros?
+        return valorExcel === fechaConCeros || valorExcel === fechaSinCeros;
+    });
+
+    resDiv.classList.remove('hidden');
+
+    if (showEncontrado) {
+        const evento = showEncontrado.EVENTO || showEncontrado.evento || "Reservado";
+        resDiv.innerHTML = `
+            <div class="p-3 bg-red-900/40 border border-red-500 rounded-xl animate-bounce">
+                <span class="text-red-500 font-black">❌ OCUPADO</span><br>
+                <span class="text-white text-[10px] uppercase">${evento}</span>
+            </div>`;
+    } else {
+        resDiv.innerHTML = `
+            <div class="p-3 bg-emerald-900/40 border border-emerald-500 rounded-xl">
+                <span class="text-emerald-400 font-black">✅ DISPONIBLE</span><br>
+                <span class="text-slate-400 text-[10px]">para el ${parseInt(d)}/${parseInt(m)}/${y}</span>
+            </div>`;
+    }
+}
 
         cargarShows();
     </script>
