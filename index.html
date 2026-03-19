@@ -63,7 +63,6 @@
         <div id="lista-proximos" class="space-y-6"></div>
     </div>
 
-
     <div id="vista-historial" class="hidden">
         <button onclick="cambiarVista('principal')" class="mb-6 flex items-center text-cyan-400 font-bold text-sm bg-slate-800/50 py-2 px-4 rounded-xl transition-transform active:scale-95 border border-cyan-900/50">
             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
@@ -123,6 +122,25 @@
                     return;
                 }
 
+                // ORDENAR SHOWS POR FECHA (MÁS PRÓXIMO PRIMERO)
+                todosLosShows.sort((a, b) => {
+                    const getFecha = (item) => {
+                        const k = Object.keys(item).find(x => x.trim().toUpperCase() === 'FECHA');
+                        return item[k] ? item[k].toString().trim() : "";
+                    };
+                    
+                    const pA = getFecha(a).split('/');
+                    const pB = getFecha(b).split('/');
+                    
+                    if (pA.length !== 3) return 1; 
+                    if (pB.length !== 3) return -1;
+                    
+                    const dateA = new Date(pA[2], pA[1] - 1, pA[0]);
+                    const dateB = new Date(pB[2], pB[1] - 1, pB[0]);
+                    
+                    return dateA - dateB; 
+                });
+
                 const hoy = new Date();
                 hoy.setHours(0,0,0,0);
                 let resumenData = {}; 
@@ -151,7 +169,6 @@
                     const pendiente = s.total - s.pagado;
                     const porcentaje = s.total > 0 ? (s.pagado / s.total) * 100 : 0;
 
-                    // NUEVO: Botón inteligente de pago. Solo aparece si hay deuda.
                     const botonPagoHTML = pendiente > 0 
                         ? `<button data-evento="${s.evento.replace(/"/g, '&quot;')}" onclick="sumarPago(this.getAttribute('data-evento'), ${s.pagado}, ${s.total})" class="mt-3 w-full bg-slate-800 text-emerald-400 border border-emerald-900/50 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-transform active:scale-95">💰 Registrar Pago</button>`
                         : '';
@@ -197,7 +214,8 @@
                     if (fechaShow >= hoy) {
                         listProx.innerHTML += cardHTML;
                     } else {
-                        listPasados.innerHTML += cardHTML;
+                        listPasados.insertAdjacentHTML('afterbegin', cardHTML); 
+                        
                         const nombreMes = fechaShow.toLocaleString('es-ES', { month: 'long', year: 'numeric' });
                         resumenData[nombreMes] = (resumenData[nombreMes] || 0) + s.total;
                     }
@@ -215,14 +233,12 @@
             } catch (err) { status.innerHTML = '<span class="text-red-500 font-bold">Error de conexión.</span>'; }
         }
 
-        // NUEVA FUNCIÓN: Sumar un pago al Excel (Metodo PATCH)
         async function sumarPago(nombre, pagadoActual, total) {
             const pendiente = total - pagadoActual;
             
-            // Le preguntamos al usuario cuánta plata ingresa ahora
             const montoStr = prompt(`El show "${nombre}" debe $${pendiente.toLocaleString('es-AR')}.\n\n¿Cuánto dinero está pagando el cliente ahora? (Escribí solo números)`);
             
-            if (!montoStr) return; // Si toca cancelar, no hace nada
+            if (!montoStr) return; 
             
             const montoIngresado = parseInt(montoStr.replace(/\D/g, ''));
             
@@ -233,14 +249,12 @@
 
             const nuevoTotalPagado = pagadoActual + montoIngresado;
 
-            // Confirmación de seguridad
             if (!confirm(`Vas a registrar un pago de $${montoIngresado.toLocaleString('es-AR')}.\nEl total cobrado pasará a ser $${nuevoTotalPagado.toLocaleString('es-AR')}.\n\n¿Estás seguro?`)) return;
 
             document.getElementById('status').style.display = 'block';
             document.getElementById('status').innerText = 'Registrando pago...';
 
             try {
-                // Hacemos el parche (PATCH) solo en la columna PAGADO de ese evento
                 const res = await fetch(`${API_URL}/EVENTO/${encodeURIComponent(nombre)}`, {
                     method: 'PATCH',
                     headers: { 'Content-Type': 'application/json' },
@@ -249,7 +263,7 @@
 
                 if (res.ok) {
                     alert("¡Pago registrado con éxito!");
-                    cargarShows(); // Refrescamos la lista para ver la barra avanzar
+                    cargarShows(); 
                 } else {
                     alert("Error al guardar en el Excel.");
                 }
