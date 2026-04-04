@@ -10,8 +10,22 @@
         body { background-color: #0f172a; color: white; font-family: 'Inter', sans-serif; }
         .card { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; }
         .resumen-card { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border-left: 4px solid #06b6d4; }
+        
+        /* TRUCO PARA CELULARES: Escondemos el ícono nativo feo pero hacemos que su "zona de toque" ocupe toda la caja */
         input[type="date"]::-webkit-calendar-picker-indicator,
-        input[type="time"]::-webkit-calendar-picker-indicator { filter: invert(1); }
+        input[type="time"]::-webkit-calendar-picker-indicator { 
+            background: transparent;
+            color: transparent;
+            cursor: pointer;
+            height: auto;
+            left: 0;
+            position: absolute;
+            right: 0;
+            top: 0;
+            width: auto;
+            bottom: 0;
+            opacity: 0;
+        }
     </style>
 </head>
 <body class="p-4 max-w-md mx-auto mb-20">
@@ -33,10 +47,28 @@
             <h3 class="text-xs font-bold text-emerald-400 uppercase mb-4 tracking-widest">Registrar Evento</h3>
             <form id="form-evento" class="space-y-3">
                 <input type="text" id="f-evento" placeholder="Nombre del Evento" class="w-full p-3 rounded-xl bg-slate-800 border border-slate-700 text-sm text-white focus:border-emerald-500 focus:outline-none" required>
+                
                 <div class="grid grid-cols-2 gap-2">
-                    <input type="date" id="f-fecha" class="p-3 rounded-xl bg-slate-800 border border-slate-700 text-sm text-white focus:border-emerald-500 focus:outline-none" required>
-                    <input type="time" id="f-hora" class="p-3 rounded-xl bg-slate-800 border border-slate-700 text-sm text-white focus:border-emerald-500 focus:outline-none" required>
+                    <div class="flex flex-col gap-1">
+                        <label class="text-[10px] font-bold text-slate-500 uppercase ml-1">Fecha</label>
+                        <div class="relative">
+                            <input type="date" id="f-fecha" class="w-full p-3 rounded-xl bg-slate-800 border border-slate-700 text-sm text-white focus:border-emerald-500 focus:outline-none relative z-10 bg-transparent" required>
+                            <div class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none z-0">
+                                <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5" /></svg>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex flex-col gap-1">
+                        <label class="text-[10px] font-bold text-slate-500 uppercase ml-1">Hora</label>
+                        <div class="relative">
+                            <input type="time" id="f-hora" class="w-full p-3 rounded-xl bg-slate-800 border border-slate-700 text-sm text-white focus:border-emerald-500 focus:outline-none relative z-10 bg-transparent" required>
+                            <div class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none z-0">
+                                <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                            </div>
+                        </div>
+                    </div>
                 </div>
+
                 <input type="text" id="f-lugar" placeholder="Lugar / Dirección" class="w-full p-3 rounded-xl bg-slate-800 border border-slate-700 text-sm text-white focus:border-emerald-500 focus:outline-none">
                 <div class="grid grid-cols-2 gap-2">
                     <input type="text" id="f-contacto" placeholder="Cliente" class="p-3 rounded-xl bg-slate-800 border border-slate-700 text-sm text-white focus:border-emerald-500 focus:outline-none">
@@ -53,7 +85,12 @@
         <section class="card p-4 mb-6 border-cyan-500/30 border">
             <h3 class="text-[10px] font-bold text-cyan-400 uppercase mb-2 tracking-widest">¿Fecha disponible?</h3>
             <div class="flex gap-2">
-                <input type="date" id="input-fecha" class="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-sm text-white focus:border-cyan-500 focus:outline-none">
+                <div class="relative flex-1">
+                    <input type="date" id="input-fecha" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-sm text-white focus:border-cyan-500 focus:outline-none relative z-10 bg-transparent">
+                    <div class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none z-0">
+                        <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5" /></svg>
+                    </div>
+                </div>
                 <button onclick="buscarFecha()" class="bg-cyan-600 px-4 py-2 rounded-xl font-bold text-xs transition-transform active:scale-95">BUSCAR</button>
             </div>
             <div id="resultado-busqueda" class="mt-3 hidden"></div>
@@ -103,7 +140,33 @@
             return parseInt(textoLimpio) || 0;
         };
 
-        // NUEVA FUNCIÓN MEJORADA: Detecta si es Android o iOS
+        function descargarICS(evento, startDate, endDate, lugar) {
+            const formatICS = (date) => {
+                const pad = (n) => n < 10 ? '0' + n : n;
+                return `${date.getFullYear()}${pad(date.getMonth() + 1)}${pad(date.getDate())}T${pad(date.getHours())}${pad(date.getMinutes())}00`;
+            };
+
+            const icsMSG = 
+`BEGIN:VCALENDAR
+VERSION:2.0
+BEGIN:VEVENT
+SUMMARY:${evento}
+DTSTART:${formatICS(startDate)}
+DTEND:${formatICS(endDate)}
+LOCATION:${lugar}
+DESCRIPTION:Registrado desde tu Agenda App🎸
+END:VEVENT
+END:VCALENDAR`;
+
+            const blob = new Blob([icsMSG], { type: 'text/calendar;charset=utf-8' });
+            const link = document.createElement('a');
+            link.href = window.URL.createObjectURL(blob);
+            link.setAttribute('download', `${evento.replace(/\\s+/g, '_')}.ics`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
         function agendarCelular(evento, fecha, hora, lugar) {
             if (!fecha || !hora) {
                 alert("Falta la fecha o la hora del show.");
@@ -116,39 +179,25 @@
             const startDate = new Date(y, m - 1, d, h, min);
             const endDate = new Date(startDate.getTime() + 2 * 60 * 60 * 1000); 
 
-            // Detectamos si el celular es Android
             const isAndroid = /Android/i.test(navigator.userAgent);
 
             if (isAndroid) {
-                // Truco para Android: abrir la app directamente usando "Intent"
-                const intentURI = `intent:#Intent;action=android.intent.action.INSERT;type=vnd.android.cursor.item/event;S.title=${encodeURIComponent(evento)};S.eventLocation=${encodeURIComponent(lugar || '')};S.description=${encodeURIComponent('Registrado desde Agenda Papá 🎸')};l.beginTime=${startDate.getTime()};l.endTime=${endDate.getTime()};end`;
-                window.location.href = intentURI;
-            } else {
-                // Truco para iOS (y compus): descargar el archivo .ics
-                const formatICS = (date) => {
-                    const pad = (n) => n < 10 ? '0' + n : n;
-                    return `${date.getFullYear()}${pad(date.getMonth() + 1)}${pad(date.getDate())}T${pad(date.getHours())}${pad(date.getMinutes())}00`;
-                };
-
-                const icsMSG = 
-`BEGIN:VCALENDAR
-VERSION:2.0
-BEGIN:VEVENT
-SUMMARY:${evento}
-DTSTART:${formatICS(startDate)}
-DTEND:${formatICS(endDate)}
-LOCATION:${lugar}
-DESCRIPTION:Registrado desde tu Agenda App🎸
-END:VEVENT
-END:VCALENDAR`;
-
-                const blob = new Blob([icsMSG], { type: 'text/calendar;charset=utf-8' });
+                const intentURI = `intent://#Intent;action=android.intent.action.INSERT;type=vnd.android.cursor.item/event;S.title=${encodeURIComponent(evento)};S.eventLocation=${encodeURIComponent(lugar || '')};S.description=${encodeURIComponent('Registrado desde Agenda Papá 🎸')};l.beginTime=${startDate.getTime()};l.endTime=${endDate.getTime()};end`;
+                
                 const link = document.createElement('a');
-                link.href = window.URL.createObjectURL(blob);
-                link.setAttribute('download', `${evento.replace(/\s+/g, '_')}.ics`);
+                link.href = intentURI;
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
+
+                setTimeout(() => {
+                    if(confirm("Si no se abrió la agenda automáticamente, tocá 'Aceptar' para guardar el archivo del show.")) {
+                        descargarICS(evento, startDate, endDate, lugar);
+                    }
+                }, 1500);
+
+            } else {
+                descargarICS(evento, startDate, endDate, lugar);
             }
         }
 
@@ -176,16 +225,12 @@ END:VCALENDAR`;
                         const k = Object.keys(item).find(x => x.trim().toUpperCase() === 'FECHA');
                         return item[k] ? item[k].toString().trim() : "";
                     };
-                    
                     const pA = getFecha(a).split('/');
                     const pB = getFecha(b).split('/');
-                    
                     if (pA.length !== 3) return 1; 
                     if (pB.length !== 3) return -1;
-                    
                     const dateA = new Date(pA[2], pA[1] - 1, pA[0]);
                     const dateB = new Date(pB[2], pB[1] - 1, pB[0]);
-                    
                     return dateA - dateB; 
                 });
 
@@ -198,21 +243,16 @@ END:VCALENDAR`;
                         const k = Object.keys(item).find(x => x.trim().toUpperCase() === n.toUpperCase());
                         return item[k] || "";
                     };
-
                     const s = {
                         evento: getVal('EVENTO'), fecha: getVal('FECHA'), hora: getVal('HORA'),
                         lugar: getVal('LUGAR'), contacto: getVal('CONTACTO'), tel: getVal('TELEFONO'),
                         total: limpiarPlata(getVal('TOTAL')), 
                         pagado: limpiarPlata(getVal('PAGADO')),
-                        estado: getVal('ESTADO DE PAGO')
                     };
-
                     if(!s.evento) return;
-
                     const p = s.fecha.split('/');
                     if(p.length !== 3) return;
                     const fechaShow = new Date(p[2], p[1] - 1, p[0]);
-                    
                     const pendiente = s.total - s.pagado;
                     const porcentaje = s.total > 0 ? (s.pagado / s.total) * 100 : 0;
 
@@ -231,11 +271,9 @@ END:VCALENDAR`;
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                                 </button>
                             </div>
-                            
                             <div class="flex items-center text-slate-400 text-xs mb-5 font-medium">
                                 📅 ${s.fecha} | ⏰ ${s.hora} ${s.contacto ? '| 👤 ' + s.contacto : ''}
                             </div>
-                            
                             <div class="space-y-2 mb-5">
                                 <div class="w-full bg-slate-900 h-1.5 rounded-full overflow-hidden">
                                     <div class="bg-gradient-to-r from-emerald-500 to-cyan-400 h-full transition-all duration-1000" style="width: ${porcentaje}%"></div>
@@ -244,28 +282,24 @@ END:VCALENDAR`;
                                     <span class="text-slate-500">Cobrado: $${s.pagado.toLocaleString('es-AR')}</span>
                                     <span class="text-slate-300 flex items-center gap-1">
                                         Total: $${s.total.toLocaleString('es-AR')}
-                                        <button onclick="editarTotal(this.getAttribute('data-evento'), ${s.total})" data-evento="${s.evento.replace(/"/g, '&quot;')}" class="text-slate-500 hover:text-cyan-400 transition-colors text-sm" title="Editar precio total">✏️</button>
+                                        <button onclick="editarTotal(this.getAttribute('data-evento'), ${s.total})" data-evento="${s.evento.replace(/"/g, '&quot;')}" class="text-slate-500 hover:text-cyan-400 transition-colors text-sm">✏️</button>
                                     </span>
                                 </div>
                                 <div class="text-left text-[11px] font-black uppercase mt-1 ${pendiente > 0 ? 'text-orange-400' : 'text-emerald-400'}">
                                     ${pendiente > 0 ? 'Debe: $' + pendiente.toLocaleString('es-AR') : '✅ PAGO COMPLETADO'}
                                 </div>
                             </div>
-
                             <div class="grid grid-cols-2 gap-3">
                                 <a href="https://wa.me/${s.tel.replace(/\D/g,'')}" target="_blank" class="flex justify-center items-center bg-emerald-600/20 text-emerald-400 text-center py-3 rounded-xl font-bold text-xs uppercase tracking-wider transition-colors hover:bg-emerald-600/40">WhatsApp</a>
                                 <button onclick="agendarCelular('${s.evento.replace(/'/g, "\\'")}', '${s.fecha}', '${s.hora}', '${(s.lugar || '').replace(/'/g, "\\'")}')" class="bg-blue-600/20 text-blue-400 text-center py-3 rounded-xl font-bold text-xs uppercase tracking-wider transition-colors hover:bg-blue-600/40">🗓️ Agenda App</button>
                             </div>
-                            
                             ${botonPagoHTML}
                         </div>
                     `;
 
-                    if (fechaShow >= hoy) {
-                        listProx.innerHTML += cardHTML;
-                    } else {
+                    if (fechaShow >= hoy) { listProx.innerHTML += cardHTML; } 
+                    else {
                         listPasados.insertAdjacentHTML('afterbegin', cardHTML); 
-                        
                         const nombreMes = fechaShow.toLocaleString('es-ES', { month: 'long', year: 'numeric' });
                         resumenData[nombreMes] = (resumenData[nombreMes] || 0) + s.total;
                     }
@@ -276,88 +310,52 @@ END:VCALENDAR`;
                         <div class="resumen-card p-4 rounded-xl flex justify-between items-center shadow-lg">
                             <span class="text-xs font-black uppercase text-slate-300 tracking-widest">${mes}</span>
                             <span class="text-cyan-400 font-black text-lg">$${resumenData[mes].toLocaleString('es-AR')}</span>
-                        </div>
-                    `;
+                        </div>`;
                 });
-
             } catch (err) { status.innerHTML = '<span class="text-red-500 font-bold">Error de conexión.</span>'; }
         }
 
         async function editarTotal(nombre, totalActual) {
-            const nuevoTotalStr = prompt(`El total actual para "${nombre}" es $${totalActual.toLocaleString('es-AR')}.\n\nIngresá el nuevo precio total correcto (escribí solo números):`, totalActual);
+            const nuevoTotalStr = prompt(`El total actual para "${nombre}" es $${totalActual.toLocaleString('es-AR')}.\n\nIngresá el nuevo precio total correcto (solo números):`, totalActual);
             if (!nuevoTotalStr) return; 
             const nuevoTotal = parseInt(nuevoTotalStr.replace(/\D/g, ''));
-            if (isNaN(nuevoTotal) || nuevoTotal <= 0) {
-                alert("Monto inválido. Escribí un número sin símbolos.");
-                return;
-            }
-            if (!confirm(`Vas a cambiar el precio total del show a $${nuevoTotal.toLocaleString('es-AR')}.\n\n¿Estás seguro?`)) return;
-
+            if (isNaN(nuevoTotal) || nuevoTotal <= 0) { alert("Monto inválido."); return; }
+            if (!confirm(`¿Cambiar el precio total a $${nuevoTotal.toLocaleString('es-AR')}?`)) return;
             document.getElementById('status').style.display = 'block';
-            document.getElementById('status').innerText = 'Actualizando precio...';
-
             try {
                 const res = await fetch(`${API_URL}/EVENTO/${encodeURIComponent(nombre)}`, {
-                    method: 'PATCH',
-                    headers: { 'Content-Type': 'application/json' },
+                    method: 'PATCH', headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ data: { "TOTAL": nuevoTotal } })
                 });
-
-                if (res.ok) {
-                    alert("¡Precio actualizado con éxito!");
-                    cargarShows(); 
-                } else {
-                    alert("Error al guardar en el Excel.");
-                }
-            } catch (err) {
-                alert("Error de red.");
-            }
+                if (res.ok) { alert("¡Precio actualizado!"); cargarShows(); } 
+                else { alert("Error al guardar."); }
+            } catch (err) { alert("Error de red."); }
         }
 
         async function sumarPago(nombre, pagadoActual, total) {
             const pendiente = total - pagadoActual;
-            const montoStr = prompt(`El show "${nombre}" debe $${pendiente.toLocaleString('es-AR')}.\n\n¿Cuánto dinero está pagando el cliente ahora? (Escribí solo números)`);
+            const montoStr = prompt(`Debe $${pendiente.toLocaleString('es-AR')}.\n\n¿Cuánto paga ahora?`);
             if (!montoStr) return; 
             const montoIngresado = parseInt(montoStr.replace(/\D/g, ''));
-            
-            if (isNaN(montoIngresado) || montoIngresado <= 0) {
-                alert("Monto inválido. Escribí un número sin símbolos.");
-                return;
-            }
-
+            if (isNaN(montoIngresado) || montoIngresado <= 0) return;
             const nuevoTotalPagado = pagadoActual + montoIngresado;
-            if (!confirm(`Vas a registrar un pago de $${montoIngresado.toLocaleString('es-AR')}.\nEl total cobrado pasará a ser $${nuevoTotalPagado.toLocaleString('es-AR')}.\n\n¿Estás seguro?`)) return;
-
+            if (!confirm(`¿Registrar pago de $${montoIngresado.toLocaleString('es-AR')}?`)) return;
             document.getElementById('status').style.display = 'block';
-            document.getElementById('status').innerText = 'Registrando pago...';
-
             try {
                 const res = await fetch(`${API_URL}/EVENTO/${encodeURIComponent(nombre)}`, {
-                    method: 'PATCH',
-                    headers: { 'Content-Type': 'application/json' },
+                    method: 'PATCH', headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ data: { "PAGADO": nuevoTotalPagado } })
                 });
-
-                if (res.ok) {
-                    alert("¡Pago registrado con éxito!");
-                    cargarShows(); 
-                } else {
-                    alert("Error al guardar en el Excel.");
-                }
-            } catch (err) {
-                alert("Error de red.");
-            }
+                if (res.ok) { alert("¡Pago registrado!"); cargarShows(); }
+            } catch (err) { alert("Error."); }
         }
 
         async function eliminarShow(nombre) {
-            if (!confirm(`¿Estás seguro que querés borrar el show "${nombre}"? Esta acción no se puede deshacer.`)) return;
+            if (!confirm(`¿Borrar "${nombre}"?`)) return;
             try {
                 const res = await fetch(`${API_URL}/EVENTO/${encodeURIComponent(nombre)}`, { method: 'DELETE' });
-                if (res.ok) {
-                    alert("Show eliminado.");
-                    cargarShows();
-                } else { alert("No se pudo borrar."); }
-            } catch (err) { alert("Error al borrar."); }
+                if (res.ok) { alert("Show eliminado."); cargarShows(); }
+            } catch (err) { alert("Error."); }
         }
 
         document.getElementById('form-evento').addEventListener('submit', async (e) => {
@@ -365,10 +363,8 @@ END:VCALENDAR`;
             const btn = document.getElementById('btn-enviar');
             btn.innerHTML = "GUARDANDO...";
             btn.disabled = true;
-
             const f = document.getElementById('f-fecha').value.split('-');
             const fechaFormateada = `${f[2]}/${f[1]}/${f[0]}`;
-
             const nuevoShow = {
                 "EVENTO": document.getElementById('f-evento').value,
                 "FECHA": fechaFormateada,
@@ -379,20 +375,13 @@ END:VCALENDAR`;
                 "TOTAL": document.getElementById('f-total').value,
                 "PAGADO": document.getElementById('f-pagado').value
             };
-
             try {
                 const res = await fetch(API_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ data: [nuevoShow] })
                 });
-
-                if (res.ok) {
-                    document.getElementById('form-evento').reset();
-                    toggleForm();
-                    cargarShows();
-                } else { alert("No se pudo guardar."); }
-            } catch (err) { alert("Hubo un error al guardar."); } 
+                if (res.ok) { document.getElementById('form-evento').reset(); toggleForm(); cargarShows(); }
+            } catch (err) { alert("Error."); } 
             finally { btn.innerHTML = "Guardar en Agenda"; btn.disabled = false; }
         });
 
@@ -400,31 +389,19 @@ END:VCALENDAR`;
             const input = document.getElementById('input-fecha').value;
             const resDiv = document.getElementById('resultado-busqueda');
             if (!input) return;
-
             const [y, m, d] = input.split('-');
             const f1 = `${d}/${m}/${y}`;
             const f2 = `${parseInt(d)}/${parseInt(m)}/${y}`;
-
             const encontrado = todosLosShows.find(item => {
                 const k = Object.keys(item).find(x => x.trim().toUpperCase() === 'FECHA');
                 const val = item[k] ? item[k].toString().trim() : "";
                 return val === f1 || val === f2;
             });
-
             resDiv.classList.remove('hidden');
-
             if (encontrado) {
-                resDiv.innerHTML = `
-                    <div class="p-4 bg-red-900/30 border border-red-500 rounded-xl text-center shadow-lg">
-                        <span class="text-red-500 text-sm font-black uppercase tracking-widest">❌ Ocupado</span><br>
-                        <span class="text-white text-xs mt-1 block">${encontrado.EVENTO || 'Reservado'}</span>
-                    </div>`;
+                resDiv.innerHTML = `<div class="p-4 bg-red-900/30 border border-red-500 rounded-xl text-center"><span class="text-red-500 text-sm font-black uppercase">❌ Ocupado</span><br><span class="text-white text-xs">${encontrado.EVENTO || 'Reservado'}</span></div>`;
             } else {
-                resDiv.innerHTML = `
-                    <div class="p-4 bg-emerald-900/30 border border-emerald-500 rounded-xl text-center shadow-lg">
-                        <span class="text-emerald-400 text-sm font-black uppercase tracking-widest">✅ Disponible</span><br>
-                        <span class="text-slate-300 text-xs mt-1 block">Para el ${parseInt(d)}/${parseInt(m)}/${y}</span>
-                    </div>`;
+                resDiv.innerHTML = `<div class="p-4 bg-emerald-900/30 border border-emerald-500 rounded-xl text-center"><span class="text-emerald-400 text-sm font-black uppercase">✅ Disponible</span></div>`;
             }
         }
 
