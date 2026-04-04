@@ -103,7 +103,7 @@
             return parseInt(textoLimpio) || 0;
         };
 
-        // NUEVA FUNCIÓN: Descargar archivo para la App del Calendario
+        // NUEVA FUNCIÓN MEJORADA: Detecta si es Android o iOS
         function agendarCelular(evento, fecha, hora, lugar) {
             if (!fecha || !hora) {
                 alert("Falta la fecha o la hora del show.");
@@ -114,15 +114,23 @@
             const [h, min] = hora.split(':');
             
             const startDate = new Date(y, m - 1, d, h, min);
-            // Calculamos que el show dure 2 horas promedio para bloquear la agenda
             const endDate = new Date(startDate.getTime() + 2 * 60 * 60 * 1000); 
 
-            const formatICS = (date) => {
-                const pad = (n) => n < 10 ? '0' + n : n;
-                return `${date.getFullYear()}${pad(date.getMonth() + 1)}${pad(date.getDate())}T${pad(date.getHours())}${pad(date.getMinutes())}00`;
-            };
+            // Detectamos si el celular es Android
+            const isAndroid = /Android/i.test(navigator.userAgent);
 
-            const icsMSG = 
+            if (isAndroid) {
+                // Truco para Android: abrir la app directamente usando "Intent"
+                const intentURI = `intent:#Intent;action=android.intent.action.INSERT;type=vnd.android.cursor.item/event;S.title=${encodeURIComponent(evento)};S.eventLocation=${encodeURIComponent(lugar || '')};S.description=${encodeURIComponent('Registrado desde Agenda Papá 🎸')};l.beginTime=${startDate.getTime()};l.endTime=${endDate.getTime()};end`;
+                window.location.href = intentURI;
+            } else {
+                // Truco para iOS (y compus): descargar el archivo .ics
+                const formatICS = (date) => {
+                    const pad = (n) => n < 10 ? '0' + n : n;
+                    return `${date.getFullYear()}${pad(date.getMonth() + 1)}${pad(date.getDate())}T${pad(date.getHours())}${pad(date.getMinutes())}00`;
+                };
+
+                const icsMSG = 
 `BEGIN:VCALENDAR
 VERSION:2.0
 BEGIN:VEVENT
@@ -134,13 +142,14 @@ DESCRIPTION:Registrado desde tu Agenda App🎸
 END:VEVENT
 END:VCALENDAR`;
 
-            const blob = new Blob([icsMSG], { type: 'text/calendar;charset=utf-8' });
-            const link = document.createElement('a');
-            link.href = window.URL.createObjectURL(blob);
-            link.setAttribute('download', `${evento.replace(/\\s+/g, '_')}.ics`);
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+                const blob = new Blob([icsMSG], { type: 'text/calendar;charset=utf-8' });
+                const link = document.createElement('a');
+                link.href = window.URL.createObjectURL(blob);
+                link.setAttribute('download', `${evento.replace(/\s+/g, '_')}.ics`);
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
         }
 
         async function cargarShows() {
