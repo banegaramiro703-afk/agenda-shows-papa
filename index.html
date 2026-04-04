@@ -103,6 +103,46 @@
             return parseInt(textoLimpio) || 0;
         };
 
+        // NUEVA FUNCIÓN: Descargar archivo para la App del Calendario
+        function agendarCelular(evento, fecha, hora, lugar) {
+            if (!fecha || !hora) {
+                alert("Falta la fecha o la hora del show.");
+                return;
+            }
+
+            const [d, m, y] = fecha.split('/');
+            const [h, min] = hora.split(':');
+            
+            const startDate = new Date(y, m - 1, d, h, min);
+            // Calculamos que el show dure 2 horas promedio para bloquear la agenda
+            const endDate = new Date(startDate.getTime() + 2 * 60 * 60 * 1000); 
+
+            const formatICS = (date) => {
+                const pad = (n) => n < 10 ? '0' + n : n;
+                return `${date.getFullYear()}${pad(date.getMonth() + 1)}${pad(date.getDate())}T${pad(date.getHours())}${pad(date.getMinutes())}00`;
+            };
+
+            const icsMSG = 
+`BEGIN:VCALENDAR
+VERSION:2.0
+BEGIN:VEVENT
+SUMMARY:${evento}
+DTSTART:${formatICS(startDate)}
+DTEND:${formatICS(endDate)}
+LOCATION:${lugar}
+DESCRIPTION:Registrado desde tu Agenda App🎸
+END:VEVENT
+END:VCALENDAR`;
+
+            const blob = new Blob([icsMSG], { type: 'text/calendar;charset=utf-8' });
+            const link = document.createElement('a');
+            link.href = window.URL.createObjectURL(blob);
+            link.setAttribute('download', `${evento.replace(/\\s+/g, '_')}.ics`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
         async function cargarShows() {
             const status = document.getElementById('status');
             const listProx = document.getElementById('lista-proximos');
@@ -122,7 +162,6 @@
                     return;
                 }
 
-                // ORDENAR SHOWS POR FECHA (MÁS PRÓXIMO PRIMERO)
                 todosLosShows.sort((a, b) => {
                     const getFecha = (item) => {
                         const k = Object.keys(item).find(x => x.trim().toUpperCase() === 'FECHA');
@@ -164,7 +203,6 @@
                     const p = s.fecha.split('/');
                     if(p.length !== 3) return;
                     const fechaShow = new Date(p[2], p[1] - 1, p[0]);
-                    const fechaLink = `${p[2]}${p[1]}${p[0]}`;
                     
                     const pendiente = s.total - s.pagado;
                     const porcentaje = s.total > 0 ? (s.pagado / s.total) * 100 : 0;
@@ -195,7 +233,10 @@
                                 </div>
                                 <div class="flex justify-between text-[10px] font-black uppercase tracking-widest">
                                     <span class="text-slate-500">Cobrado: $${s.pagado.toLocaleString('es-AR')}</span>
-                                    <span class="text-slate-300">Total: $${s.total.toLocaleString('es-AR')}</span>
+                                    <span class="text-slate-300 flex items-center gap-1">
+                                        Total: $${s.total.toLocaleString('es-AR')}
+                                        <button onclick="editarTotal(this.getAttribute('data-evento'), ${s.total})" data-evento="${s.evento.replace(/"/g, '&quot;')}" class="text-slate-500 hover:text-cyan-400 transition-colors text-sm" title="Editar precio total">✏️</button>
+                                    </span>
                                 </div>
                                 <div class="text-left text-[11px] font-black uppercase mt-1 ${pendiente > 0 ? 'text-orange-400' : 'text-emerald-400'}">
                                     ${pendiente > 0 ? 'Debe: $' + pendiente.toLocaleString('es-AR') : '✅ PAGO COMPLETADO'}
@@ -203,8 +244,8 @@
                             </div>
 
                             <div class="grid grid-cols-2 gap-3">
-                                <a href="https://wa.me/${s.tel.replace(/\D/g,'')}" target="_blank" class="bg-emerald-600/20 text-emerald-400 text-center py-3 rounded-xl font-bold text-xs uppercase tracking-wider transition-colors hover:bg-emerald-600/40">WhatsApp</a>
-                                <a href="https://www.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(s.evento)}&dates=${fechaLink}T210000Z/${fechaLink}T235900Z&details=Lugar: ${encodeURIComponent(s.lugar)}" target="_blank" class="bg-blue-600/20 text-blue-400 text-center py-3 rounded-xl font-bold text-xs uppercase tracking-wider transition-colors hover:bg-blue-600/40">🗓️ Agenda</a>
+                                <a href="https://wa.me/${s.tel.replace(/\D/g,'')}" target="_blank" class="flex justify-center items-center bg-emerald-600/20 text-emerald-400 text-center py-3 rounded-xl font-bold text-xs uppercase tracking-wider transition-colors hover:bg-emerald-600/40">WhatsApp</a>
+                                <button onclick="agendarCelular('${s.evento.replace(/'/g, "\\'")}', '${s.fecha}', '${s.hora}', '${(s.lugar || '').replace(/'/g, "\\'")}')" class="bg-blue-600/20 text-blue-400 text-center py-3 rounded-xl font-bold text-xs uppercase tracking-wider transition-colors hover:bg-blue-600/40">🗓️ Agenda App</button>
                             </div>
                             
                             ${botonPagoHTML}
@@ -233,13 +274,41 @@
             } catch (err) { status.innerHTML = '<span class="text-red-500 font-bold">Error de conexión.</span>'; }
         }
 
+        async function editarTotal(nombre, totalActual) {
+            const nuevoTotalStr = prompt(`El total actual para "${nombre}" es $${totalActual.toLocaleString('es-AR')}.\n\nIngresá el nuevo precio total correcto (escribí solo números):`, totalActual);
+            if (!nuevoTotalStr) return; 
+            const nuevoTotal = parseInt(nuevoTotalStr.replace(/\D/g, ''));
+            if (isNaN(nuevoTotal) || nuevoTotal <= 0) {
+                alert("Monto inválido. Escribí un número sin símbolos.");
+                return;
+            }
+            if (!confirm(`Vas a cambiar el precio total del show a $${nuevoTotal.toLocaleString('es-AR')}.\n\n¿Estás seguro?`)) return;
+
+            document.getElementById('status').style.display = 'block';
+            document.getElementById('status').innerText = 'Actualizando precio...';
+
+            try {
+                const res = await fetch(`${API_URL}/EVENTO/${encodeURIComponent(nombre)}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ data: { "TOTAL": nuevoTotal } })
+                });
+
+                if (res.ok) {
+                    alert("¡Precio actualizado con éxito!");
+                    cargarShows(); 
+                } else {
+                    alert("Error al guardar en el Excel.");
+                }
+            } catch (err) {
+                alert("Error de red.");
+            }
+        }
+
         async function sumarPago(nombre, pagadoActual, total) {
             const pendiente = total - pagadoActual;
-            
             const montoStr = prompt(`El show "${nombre}" debe $${pendiente.toLocaleString('es-AR')}.\n\n¿Cuánto dinero está pagando el cliente ahora? (Escribí solo números)`);
-            
             if (!montoStr) return; 
-            
             const montoIngresado = parseInt(montoStr.replace(/\D/g, ''));
             
             if (isNaN(montoIngresado) || montoIngresado <= 0) {
@@ -248,7 +317,6 @@
             }
 
             const nuevoTotalPagado = pagadoActual + montoIngresado;
-
             if (!confirm(`Vas a registrar un pago de $${montoIngresado.toLocaleString('es-AR')}.\nEl total cobrado pasará a ser $${nuevoTotalPagado.toLocaleString('es-AR')}.\n\n¿Estás seguro?`)) return;
 
             document.getElementById('status').style.display = 'block';
