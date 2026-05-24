@@ -11,7 +11,7 @@
         .card { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; }
         .resumen-card { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border-left: 4px solid #06b6d4; }
         
-        /* TRUCO PARA CELULARES: Escondemos el ícono nativo feo pero hacemos que su "zona de toque" ocupe toda la caja */
+        /* TRUCO PARA CELULARES */
         input[type="date"]::-webkit-calendar-picker-indicator,
         input[type="time"]::-webkit-calendar-picker-indicator { 
             background: transparent;
@@ -115,7 +115,9 @@
     </div>
 
     <script>
-        const API_URL = 'https://sheetdb.io/api/v1/d1yjr4l7r3o7q';
+        // 👇👇 ¡ACORDATE DE CAMBIAR ESTE LINK POR EL NUEVO QUE CREES EN SHEETDB! 👇👇
+        const API_URL = 'https://sheetdb.io/api/v1/d1yjr4l7r3o7q'; 
+        
         let todosLosShows = [];
         let editandoNombreOriginal = null;
 
@@ -213,7 +215,7 @@ END:VCALENDAR`;
             const blob = new Blob([icsMSG], { type: 'text/calendar;charset=utf-8' });
             const link = document.createElement('a');
             link.href = window.URL.createObjectURL(blob);
-            link.setAttribute('download', `${evento.replace(/\\s+/g, '_')}.ics`);
+            link.setAttribute('download', `${evento.replace(/\s+/g, '_')}.ics`);
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
@@ -261,14 +263,23 @@ END:VCALENDAR`;
             try {
                 const response = await fetch(API_URL);
                 todosLosShows = await response.json();
-                status.style.display = 'none';
-                listProx.innerHTML = '';
-                listPasados.innerHTML = '';
+                
+                // SISTEMA DE SEGURIDAD NUEVO: Avisa si SheetDB se quedó sin consultas gratuitas
+                if (todosLosShows.error) {
+                    status.style.display = 'block';
+                    status.innerHTML = `<span class="text-red-500 font-bold">⚠️ Error: Límite de SheetDB agotado. Creá una nueva API.</span>`;
+                    return;
+                }
 
-                if (!todosLosShows || todosLosShows.length === 0) {
+                if (!Array.isArray(todosLosShows) || todosLosShows.length === 0) {
+                    status.style.display = 'none';
                     listProx.innerHTML = '<p class="text-center text-slate-500 text-sm">No hay eventos cargados.</p>';
                     return;
                 }
+
+                status.style.display = 'none';
+                listProx.innerHTML = '';
+                listPasados.innerHTML = '';
 
                 todosLosShows.sort((a, b) => {
                     const getFecha = (item) => {
@@ -356,10 +367,6 @@ END:VCALENDAR`;
 
                     if (fechaShow >= hoy) { listProx.innerHTML += cardHTML; } 
                     else {
-<<<<<<< HEAD
-=======
-                        listPasados.insertAdjacentHTML('afterbegin', cardHTML); 
->>>>>>> 6e252de95701119f363e9e7fed3afa51dc6e9afe
                         const nombreMes = fechaShow.toLocaleString('es-ES', { month: 'long', year: 'numeric' });
                         if (!showsPasadosPorMes[nombreMes]) {
                             showsPasadosPorMes[nombreMes] = [];
@@ -370,7 +377,6 @@ END:VCALENDAR`;
                     }
                 });
 
-<<<<<<< HEAD
                 mesesOrdenados.reverse().forEach((mes, index) => {
                     const idMes = `mes-${index}`;
                     listPasados.innerHTML += `
@@ -387,16 +393,11 @@ END:VCALENDAR`;
                             </div>
                         </div>
                     `;
-=======
-                Object.keys(resumenData).forEach(mes => {
-                    resMensual.innerHTML += `
-                        <div class="resumen-card p-4 rounded-xl flex justify-between items-center shadow-lg">
-                            <span class="text-xs font-black uppercase text-slate-300 tracking-widest">${mes}</span>
-                            <span class="text-cyan-400 font-black text-lg">$${resumenData[mes].toLocaleString('es-AR')}</span>
-                        </div>`;
->>>>>>> 6e252de95701119f363e9e7fed3afa51dc6e9afe
                 });
-            } catch (err) { status.innerHTML = '<span class="text-red-500 font-bold">Error de conexión.</span>'; }
+            } catch (err) { 
+                status.style.display = 'block';
+                status.innerHTML = '<span class="text-red-500 font-bold">Error de conexión. Revisá tu internet.</span>'; 
+            }
         }
 
         async function editarTotal(nombre, totalActual) {
@@ -460,7 +461,6 @@ END:VCALENDAR`;
                 "PAGADO": document.getElementById('f-pagado').value
             };
             try {
-<<<<<<< HEAD
                 if (editandoNombreOriginal) {
                     const res = await fetch(`${API_URL}/EVENTO/${encodeURIComponent(editandoNombreOriginal)}`, {
                         method: 'PATCH', headers: { 'Content-Type': 'application/json' },
@@ -476,15 +476,6 @@ END:VCALENDAR`;
                 }
             } catch (err) { alert("Error."); } 
             finally { btn.innerHTML = editandoNombreOriginal ? "Actualizar Evento" : "Guardar en Agenda"; btn.disabled = false; }
-=======
-                const res = await fetch(API_URL, {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ data: [nuevoShow] })
-                });
-                if (res.ok) { document.getElementById('form-evento').reset(); toggleForm(); cargarShows(); }
-            } catch (err) { alert("Error."); } 
-            finally { btn.innerHTML = "Guardar en Agenda"; btn.disabled = false; }
->>>>>>> 6e252de95701119f363e9e7fed3afa51dc6e9afe
         });
 
         function buscarFecha() {
