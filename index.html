@@ -356,6 +356,10 @@ END:VCALENDAR`;
 
                     if (fechaShow >= hoy) { listProx.innerHTML += cardHTML; } 
                     else {
+<<<<<<< HEAD
+=======
+                        listPasados.insertAdjacentHTML('afterbegin', cardHTML); 
+>>>>>>> 6e252de95701119f363e9e7fed3afa51dc6e9afe
                         const nombreMes = fechaShow.toLocaleString('es-ES', { month: 'long', year: 'numeric' });
                         if (!showsPasadosPorMes[nombreMes]) {
                             showsPasadosPorMes[nombreMes] = [];
@@ -366,6 +370,7 @@ END:VCALENDAR`;
                     }
                 });
 
+<<<<<<< HEAD
                 mesesOrdenados.reverse().forEach((mes, index) => {
                     const idMes = `mes-${index}`;
                     listPasados.innerHTML += `
@@ -382,6 +387,14 @@ END:VCALENDAR`;
                             </div>
                         </div>
                     `;
+=======
+                Object.keys(resumenData).forEach(mes => {
+                    resMensual.innerHTML += `
+                        <div class="resumen-card p-4 rounded-xl flex justify-between items-center shadow-lg">
+                            <span class="text-xs font-black uppercase text-slate-300 tracking-widest">${mes}</span>
+                            <span class="text-cyan-400 font-black text-lg">$${resumenData[mes].toLocaleString('es-AR')}</span>
+                        </div>`;
+>>>>>>> 6e252de95701119f363e9e7fed3afa51dc6e9afe
                 });
             } catch (err) { status.innerHTML = '<span class="text-red-500 font-bold">Error de conexión.</span>'; }
         }
@@ -447,6 +460,7 @@ END:VCALENDAR`;
                 "PAGADO": document.getElementById('f-pagado').value
             };
             try {
+<<<<<<< HEAD
                 if (editandoNombreOriginal) {
                     const res = await fetch(`${API_URL}/EVENTO/${encodeURIComponent(editandoNombreOriginal)}`, {
                         method: 'PATCH', headers: { 'Content-Type': 'application/json' },
@@ -462,6 +476,15 @@ END:VCALENDAR`;
                 }
             } catch (err) { alert("Error."); } 
             finally { btn.innerHTML = editandoNombreOriginal ? "Actualizar Evento" : "Guardar en Agenda"; btn.disabled = false; }
+=======
+                const res = await fetch(API_URL, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ data: [nuevoShow] })
+                });
+                if (res.ok) { document.getElementById('form-evento').reset(); toggleForm(); cargarShows(); }
+            } catch (err) { alert("Error."); } 
+            finally { btn.innerHTML = "Guardar en Agenda"; btn.disabled = false; }
+>>>>>>> 6e252de95701119f363e9e7fed3afa51dc6e9afe
         });
 
         function buscarFecha() {
