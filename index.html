@@ -281,6 +281,47 @@
 
         let miGrafico = null;
 
+        function actualizarFiltrosDashboard() {
+            const select = document.getElementById('filtro-dashboard');
+            const valorActual = select.value;
+            
+            select.innerHTML = `
+                <option value="todo">Histórico Total</option>
+                <option value="anio">Este Año</option>
+                <option value="mes">Este Mes</option>
+            `;
+            
+            const mesesNombres = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+            const mesesSet = new Set();
+            
+            todosLosShows.forEach(item => {
+                const k = Object.keys(item).find(x => x.trim().toUpperCase() === 'FECHA');
+                if (!item[k]) return;
+                const partes = item[k].toString().split('/');
+                if (partes.length !== 3) return;
+                const y = parseInt(partes[2]);
+                const m = parseInt(partes[1]);
+                mesesSet.add(`${y}-${m}`); // Usamos formato YYYY-M para ordenar fácil
+            });
+            
+            const mesesOrdenados = Array.from(mesesSet).sort((a, b) => {
+                const [y1, m1] = a.split('-').map(Number);
+                const [y2, m2] = b.split('-').map(Number);
+                return new Date(y2, m2 - 1) - new Date(y1, m1 - 1);
+            });
+            
+            mesesOrdenados.forEach(codigo => {
+                const [y, m] = codigo.split('-');
+                const label = `${mesesNombres[m - 1]} ${y}`;
+                select.innerHTML += `<option value="${codigo}">${label.toUpperCase()}</option>`;
+            });
+            
+            // Intentar mantener la selección si ya existía
+            if (Array.from(select.options).some(opt => opt.value === valorActual)) {
+                select.value = valorActual;
+            }
+        }
+
         function renderizarDashboard() {
             const filtro = document.getElementById('filtro-dashboard').value;
             const hoy = new Date();
@@ -308,8 +349,14 @@
                 const m = parseInt(partes[1]);
                 const y = parseInt(partes[2]);
 
+                // Filtros
                 if (filtro === 'anio' && y !== anioActual) return;
                 if (filtro === 'mes' && (y !== anioActual || m !== mesActual)) return;
+                if (filtro !== 'todo' && filtro !== 'anio' && filtro !== 'mes') {
+                    // Filtro de mes específico (ej: "2026-5")
+                    const [filtroY, filtroM] = filtro.split('-').map(Number);
+                    if (y !== filtroY || m !== filtroM) return;
+                }
 
                 const fechaShow = new Date(y, m - 1, d);
                 const pagado = limpiarPlata(getVal('PAGADO'));
@@ -319,27 +366,49 @@
                 pendienteTotal += pendiente;
                 cantidadShows++;
 
-                const mesNombre = fechaShow.toLocaleString('es-ES', { month: 'short' });
-                const labelMes = `${mesNombre} ${y}`.toUpperCase().replace('.', ''); // Fix for short months ending in dot in some browsers
+                const esMesEspecifico = filtro !== 'todo' && filtro !== 'anio';
 
-                if (!gananciasPorMes[labelMes]) {
-                    gananciasPorMes[labelMes] = 0;
+                if (esMesEspecifico) {
+                    const semana = Math.ceil(d / 7);
+                    const labelSemana = `Sem. ${semana}`;
+                    if (!gananciasPorMes[labelSemana]) gananciasPorMes[labelSemana] = 0;
+                    gananciasPorMes[labelSemana] += pagado;
+                } else {
+                    const mesNombre = fechaShow.toLocaleString('es-ES', { month: 'short' });
+                    const labelMes = `${mesNombre} ${y}`.toUpperCase().replace('.', ''); 
+                    if (!gananciasPorMes[labelMes]) gananciasPorMes[labelMes] = 0;
+                    gananciasPorMes[labelMes] += pagado;
                 }
-                gananciasPorMes[labelMes] += pagado;
             });
 
             document.getElementById('dash-cobrado').innerText = `$${cobradoTotal.toLocaleString('es-AR')}`;
             document.getElementById('dash-pendiente').innerText = `$${pendienteTotal.toLocaleString('es-AR')}`;
             document.getElementById('dash-shows').innerText = cantidadShows;
 
-            const mesesVal = {'ENE':0,'FEB':1,'MAR':2,'ABR':3,'MAY':4,'JUN':5,'JUL':6,'AGO':7,'SEP':8,'OCT':9,'NOV':10,'DIC':11};
-            const labelsOrdenados = Object.keys(gananciasPorMes).sort((a, b) => {
-                const [mesA, anioA] = a.split(' ');
-                const [mesB, anioB] = b.split(' ');
-                const dateA = new Date(parseInt(anioA), mesesVal[mesA] !== undefined ? mesesVal[mesA] : 0);
-                const dateB = new Date(parseInt(anioB), mesesVal[mesB] !== undefined ? mesesVal[mesB] : 0);
-                return dateA - dateB;
-            });
+            const esMesEspecifico = filtro !== 'todo' && filtro !== 'anio';
+            let labelsOrdenados = [];
+
+            if (esMesEspecifico) {
+                // Rellenar semanas vacías con 0 para mostrar la evolución completa del mes
+                const semanasConDatos = Object.keys(gananciasPorMes).map(k => parseInt(k.replace('Sem. ', '')));
+                if (semanasConDatos.length > 0) {
+                    const maxSem = Math.max(...semanasConDatos, 4); // Al menos 4 semanas
+                    for(let i = 1; i <= maxSem; i++) {
+                        const l = `Sem. ${i}`;
+                        if (gananciasPorMes[l] === undefined) gananciasPorMes[l] = 0;
+                        labelsOrdenados.push(l);
+                    }
+                }
+            } else {
+                const mesesVal = {'ENE':0,'FEB':1,'MAR':2,'ABR':3,'MAY':4,'JUN':5,'JUL':6,'AGO':7,'SEP':8,'OCT':9,'NOV':10,'DIC':11};
+                labelsOrdenados = Object.keys(gananciasPorMes).sort((a, b) => {
+                    const [mesA, anioA] = a.split(' ');
+                    const [mesB, anioB] = b.split(' ');
+                    const dateA = new Date(parseInt(anioA), mesesVal[mesA] !== undefined ? mesesVal[mesA] : 0);
+                    const dateB = new Date(parseInt(anioB), mesesVal[mesB] !== undefined ? mesesVal[mesB] : 0);
+                    return dateA - dateB;
+                });
+            }
 
             const datosOrdenados = labelsOrdenados.map(label => gananciasPorMes[label]);
 
@@ -542,6 +611,7 @@
                 });
                 
                 // Actualizar Dashboard
+                actualizarFiltrosDashboard();
                 renderizarDashboard();
             } catch (err) { 
                 status.style.display = 'block';
