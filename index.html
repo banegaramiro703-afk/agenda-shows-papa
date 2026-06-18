@@ -115,8 +115,13 @@
     </div>
 
     <script>
-        // 👇👇 ¡ACORDATE DE CAMBIAR ESTE LINK POR EL NUEVO QUE CREES EN SHEETDB! 👇👇
-        const API_URL = 'https://sheetdb.io/api/v1/d1yjr4l7r3o7q'; 
+        const SUPABASE_URL = 'https://gcvjzmhlbiptqjtuydfp.supabase.co';
+        const SUPABASE_KEY = 'sb_publishable_tglkpS_UxdhC8cLpNw9vTg_DSDzJC5k';
+        const API_HEADERS = {
+            'Content-Type': 'application/json',
+            'apikey': SUPABASE_KEY,
+            'Authorization': `Bearer ${SUPABASE_KEY}`
+        };
         
         let todosLosShows = [];
         let editandoNombreOriginal = null;
@@ -261,17 +266,10 @@ END:VCALENDAR`;
             const listPasados = document.getElementById('lista-pasados');
             
             try {
-                const response = await fetch(API_URL);
+                const response = await fetch(`${SUPABASE_URL}/rest/v1/shows`, { headers: API_HEADERS });
                 todosLosShows = await response.json();
                 
-                // SISTEMA DE SEGURIDAD NUEVO: Avisa si SheetDB se quedó sin consultas gratuitas
-                if (todosLosShows.error) {
-                    status.style.display = 'block';
-                    status.innerHTML = `<span class="text-red-500 font-bold">⚠️ Error: Límite de SheetDB agotado. Creá una nueva API.</span>`;
-                    return;
-                }
-
-                if (!Array.isArray(todosLosShows) || todosLosShows.length === 0) {
+                if (todosLosShows.error || !Array.isArray(todosLosShows) || todosLosShows.length === 0) {
                     status.style.display = 'none';
                     listProx.innerHTML = '<p class="text-center text-slate-500 text-sm">No hay eventos cargados.</p>';
                     return;
@@ -408,9 +406,9 @@ END:VCALENDAR`;
             if (!confirm(`¿Cambiar el precio total a $${nuevoTotal.toLocaleString('es-AR')}?`)) return;
             document.getElementById('status').style.display = 'block';
             try {
-                const res = await fetch(`${API_URL}/EVENTO/${encodeURIComponent(nombre)}`, {
-                    method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ data: { "TOTAL": nuevoTotal } })
+                const res = await fetch(`${SUPABASE_URL}/rest/v1/shows?EVENTO=eq.${encodeURIComponent(nombre)}`, {
+                    method: 'PATCH', headers: API_HEADERS,
+                    body: JSON.stringify({ "TOTAL": nuevoTotal.toString() })
                 });
                 if (res.ok) { alert("¡Precio actualizado!"); cargarShows(); } 
                 else { alert("Error al guardar."); }
@@ -427,9 +425,9 @@ END:VCALENDAR`;
             if (!confirm(`¿Registrar pago de $${montoIngresado.toLocaleString('es-AR')}?`)) return;
             document.getElementById('status').style.display = 'block';
             try {
-                const res = await fetch(`${API_URL}/EVENTO/${encodeURIComponent(nombre)}`, {
-                    method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ data: { "PAGADO": nuevoTotalPagado } })
+                const res = await fetch(`${SUPABASE_URL}/rest/v1/shows?EVENTO=eq.${encodeURIComponent(nombre)}`, {
+                    method: 'PATCH', headers: API_HEADERS,
+                    body: JSON.stringify({ "PAGADO": nuevoTotalPagado.toString() })
                 });
                 if (res.ok) { alert("¡Pago registrado!"); cargarShows(); }
             } catch (err) { alert("Error."); }
@@ -438,7 +436,9 @@ END:VCALENDAR`;
         async function eliminarShow(nombre) {
             if (!confirm(`¿Borrar "${nombre}"?`)) return;
             try {
-                const res = await fetch(`${API_URL}/EVENTO/${encodeURIComponent(nombre)}`, { method: 'DELETE' });
+                const res = await fetch(`${SUPABASE_URL}/rest/v1/shows?EVENTO=eq.${encodeURIComponent(nombre)}`, { 
+                    method: 'DELETE', headers: API_HEADERS 
+                });
                 if (res.ok) { alert("Show eliminado."); cargarShows(); }
             } catch (err) { alert("Error."); }
         }
@@ -462,15 +462,15 @@ END:VCALENDAR`;
             };
             try {
                 if (editandoNombreOriginal) {
-                    const res = await fetch(`${API_URL}/EVENTO/${encodeURIComponent(editandoNombreOriginal)}`, {
-                        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ data: nuevoShow })
+                    const res = await fetch(`${SUPABASE_URL}/rest/v1/shows?EVENTO=eq.${encodeURIComponent(editandoNombreOriginal)}`, {
+                        method: 'PATCH', headers: API_HEADERS,
+                        body: JSON.stringify(nuevoShow)
                     });
                     if (res.ok) { cancelarEdicion(); cargarShows(); }
                 } else {
-                    const res = await fetch(API_URL, {
-                        method: 'POST', headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ data: [nuevoShow] })
+                    const res = await fetch(`${SUPABASE_URL}/rest/v1/shows`, {
+                        method: 'POST', headers: API_HEADERS,
+                        body: JSON.stringify(nuevoShow)
                     });
                     if (res.ok) { document.getElementById('form-evento').reset(); toggleForm(); cargarShows(); }
                 }
