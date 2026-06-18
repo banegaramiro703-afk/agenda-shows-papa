@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Agenda Papá Pro 🎸</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
         body { background-color: #0f172a; color: white; font-family: 'Inter', sans-serif; }
@@ -110,6 +111,48 @@
         </button>
         <h2 class="text-xl font-black text-orange-400 uppercase tracking-tighter mb-6">Archivo de Shows</h2>
         
+        <!-- DASHBOARD FINANCIERO -->
+        <div id="dashboard-financiero" class="mb-8">
+            <div class="flex justify-between items-center mb-3">
+                <h3 class="text-xs font-bold text-cyan-400 uppercase tracking-widest ml-1">Resumen Financiero</h3>
+                <select id="filtro-dashboard" onchange="renderizarDashboard()" class="bg-slate-800 text-xs text-white border border-slate-700 rounded-lg p-1 px-2 focus:outline-none focus:border-cyan-500">
+                    <option value="todo">Histórico Total</option>
+                    <option value="anio">Este Año</option>
+                    <option value="mes">Este Mes</option>
+                </select>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-3 mb-4">
+                <div class="card p-4 shadow-lg border border-emerald-900/50 relative overflow-hidden">
+                    <div class="absolute -right-4 -top-4 w-12 h-12 bg-emerald-500/20 rounded-full blur-xl"></div>
+                    <p class="text-[10px] text-slate-400 uppercase tracking-widest font-bold mb-1">Cobrado</p>
+                    <p id="dash-cobrado" class="text-emerald-400 font-black text-lg">$0</p>
+                </div>
+                <div class="card p-4 shadow-lg border border-orange-900/50 relative overflow-hidden">
+                    <div class="absolute -right-4 -top-4 w-12 h-12 bg-orange-500/20 rounded-full blur-xl"></div>
+                    <p class="text-[10px] text-slate-400 uppercase tracking-widest font-bold mb-1">Pendiente</p>
+                    <p id="dash-pendiente" class="text-orange-400 font-black text-lg">$0</p>
+                </div>
+            </div>
+            <div class="card p-4 shadow-lg border border-cyan-900/50 relative overflow-hidden mb-4">
+                <div class="absolute -right-4 -top-4 w-12 h-12 bg-cyan-500/20 rounded-full blur-xl"></div>
+                <div class="flex justify-between items-center">
+                    <div>
+                        <p class="text-[10px] text-slate-400 uppercase tracking-widest font-bold mb-1">Total de Shows</p>
+                        <p id="dash-shows" class="text-cyan-400 font-black text-lg">0</p>
+                    </div>
+                    <div class="w-10 h-10 bg-cyan-900/30 rounded-xl flex items-center justify-center text-cyan-400 text-xl">🎸</div>
+                </div>
+            </div>
+
+            <div class="card p-4 shadow-lg border border-slate-700/50">
+                <p class="text-[10px] text-slate-400 uppercase tracking-widest font-bold mb-3 text-center">Evolución de Ganancias</p>
+                <div class="relative h-48 w-full">
+                    <canvas id="chartEvolucion"></canvas>
+                </div>
+            </div>
+        </div>
+        
         <h3 class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3 ml-1">Historial por Mes</h3>
         <div id="lista-pasados" class="space-y-4"></div>
     </div>
@@ -199,33 +242,6 @@
             return parseInt(textoLimpio) || 0;
         };
 
-        function descargarICS(evento, startDate, endDate, lugar) {
-            const formatICS = (date) => {
-                const pad = (n) => n < 10 ? '0' + n : n;
-                return `${date.getFullYear()}${pad(date.getMonth() + 1)}${pad(date.getDate())}T${pad(date.getHours())}${pad(date.getMinutes())}00`;
-            };
-
-            const icsMSG = 
-`BEGIN:VCALENDAR
-VERSION:2.0
-BEGIN:VEVENT
-SUMMARY:${evento}
-DTSTART:${formatICS(startDate)}
-DTEND:${formatICS(endDate)}
-LOCATION:${lugar}
-DESCRIPTION:Registrado desde tu Agenda App🎸
-END:VEVENT
-END:VCALENDAR`;
-
-            const blob = new Blob([icsMSG], { type: 'text/calendar;charset=utf-8' });
-            const link = document.createElement('a');
-            link.href = window.URL.createObjectURL(blob);
-            link.setAttribute('download', `${evento.replace(/\s+/g, '_')}.ics`);
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        }
-
         function agendarCelular(evento, fecha, hora, lugar) {
             if (!fecha || !hora) {
                 alert("Falta la fecha o la hora del show.");
@@ -236,28 +252,147 @@ END:VCALENDAR`;
             const [h, min] = hora.split(':');
             
             const startDate = new Date(y, m - 1, d, h, min);
-            const endDate = new Date(startDate.getTime() + 2 * 60 * 60 * 1000); 
+            const endDate = new Date(startDate.getTime() + 2 * 60 * 60 * 1000); // Duración estimada de 2 horas
 
-            const isAndroid = /Android/i.test(navigator.userAgent);
+            // Formato YYYYMMDDTHHMMSS (sin 'Z' al final para que use la zona horaria del celular)
+            const formatGCalDate = (date) => {
+                const pad = (n) => n < 10 ? '0' + n : n;
+                return `${date.getFullYear()}${pad(date.getMonth() + 1)}${pad(date.getDate())}T${pad(date.getHours())}${pad(date.getMinutes())}00`;
+            };
 
-            if (isAndroid) {
-                const intentURI = `intent://#Intent;action=android.intent.action.INSERT;type=vnd.android.cursor.item/event;S.title=${encodeURIComponent(evento)};S.eventLocation=${encodeURIComponent(lugar || '')};S.description=${encodeURIComponent('Registrado desde Agenda Papá 🎸')};l.beginTime=${startDate.getTime()};l.endTime=${endDate.getTime()};end`;
+            const url = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(evento)}&dates=${formatGCalDate(startDate)}/${formatGCalDate(endDate)}&details=${encodeURIComponent('Registrado desde Agenda Papá 🎸')}&location=${encodeURIComponent(lugar || '')}`;
+            
+            // Abre directamente Google Calendar
+            window.open(url, '_blank');
+        }
+
+        let miGrafico = null;
+
+        function renderizarDashboard() {
+            const filtro = document.getElementById('filtro-dashboard').value;
+            const hoy = new Date();
+            const mesActual = hoy.getMonth() + 1;
+            const anioActual = hoy.getFullYear();
+
+            let cobradoTotal = 0;
+            let pendienteTotal = 0;
+            let cantidadShows = 0;
+            let gananciasPorMes = {};
+
+            todosLosShows.forEach(item => {
+                const getVal = (n) => {
+                    const k = Object.keys(item).find(x => x.trim().toUpperCase() === n.toUpperCase());
+                    return item[k] || "";
+                };
+
+                const fechaStr = getVal('FECHA');
+                if (!fechaStr) return;
                 
-                const link = document.createElement('a');
-                link.href = intentURI;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
+                const partes = fechaStr.split('/');
+                if (partes.length !== 3) return;
+                
+                const d = parseInt(partes[0]);
+                const m = parseInt(partes[1]);
+                const y = parseInt(partes[2]);
 
-                setTimeout(() => {
-                    if(confirm("Si no se abrió la agenda automáticamente, tocá 'Aceptar' para guardar el archivo del show.")) {
-                        descargarICS(evento, startDate, endDate, lugar);
+                if (filtro === 'anio' && y !== anioActual) return;
+                if (filtro === 'mes' && (y !== anioActual || m !== mesActual)) return;
+
+                const fechaShow = new Date(y, m - 1, d);
+                const pagado = limpiarPlata(getVal('PAGADO'));
+                const pendiente = limpiarPlata(getVal('TOTAL')) - pagado;
+
+                cobradoTotal += pagado;
+                pendienteTotal += pendiente;
+                cantidadShows++;
+
+                const mesNombre = fechaShow.toLocaleString('es-ES', { month: 'short' });
+                const labelMes = `${mesNombre} ${y}`.toUpperCase().replace('.', ''); // Fix for short months ending in dot in some browsers
+
+                if (!gananciasPorMes[labelMes]) {
+                    gananciasPorMes[labelMes] = 0;
+                }
+                gananciasPorMes[labelMes] += pagado;
+            });
+
+            document.getElementById('dash-cobrado').innerText = `$${cobradoTotal.toLocaleString('es-AR')}`;
+            document.getElementById('dash-pendiente').innerText = `$${pendienteTotal.toLocaleString('es-AR')}`;
+            document.getElementById('dash-shows').innerText = cantidadShows;
+
+            const mesesVal = {'ENE':0,'FEB':1,'MAR':2,'ABR':3,'MAY':4,'JUN':5,'JUL':6,'AGO':7,'SEP':8,'OCT':9,'NOV':10,'DIC':11};
+            const labelsOrdenados = Object.keys(gananciasPorMes).sort((a, b) => {
+                const [mesA, anioA] = a.split(' ');
+                const [mesB, anioB] = b.split(' ');
+                const dateA = new Date(parseInt(anioA), mesesVal[mesA] !== undefined ? mesesVal[mesA] : 0);
+                const dateB = new Date(parseInt(anioB), mesesVal[mesB] !== undefined ? mesesVal[mesB] : 0);
+                return dateA - dateB;
+            });
+
+            const datosOrdenados = labelsOrdenados.map(label => gananciasPorMes[label]);
+
+            const ctx = document.getElementById('chartEvolucion').getContext('2d');
+            if (miGrafico) miGrafico.destroy();
+
+            let gradient = ctx.createLinearGradient(0, 0, 0, 400);
+            gradient.addColorStop(0, 'rgba(16, 185, 129, 0.4)');
+            gradient.addColorStop(1, 'rgba(16, 185, 129, 0.0)');
+
+            miGrafico = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labelsOrdenados,
+                    datasets: [{
+                        label: 'Cobrado ($)',
+                        data: datosOrdenados,
+                        borderColor: '#10b981',
+                        backgroundColor: gradient,
+                        borderWidth: 2,
+                        pointBackgroundColor: '#06b6d4',
+                        pointBorderColor: '#0f172a',
+                        pointBorderWidth: 2,
+                        pointRadius: 4,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(30, 41, 59, 0.9)',
+                            titleColor: '#38bdf8',
+                            bodyColor: '#fff',
+                            borderColor: 'rgba(255,255,255,0.1)',
+                            borderWidth: 1,
+                            callbacks: {
+                                label: function(context) {
+                                    return 'Cobrado: $' + context.raw.toLocaleString('es-AR');
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: 'rgba(255, 255, 255, 0.05)', drawBorder: false },
+                            ticks: {
+                                color: '#64748b', font: { size: 10, family: "'Inter', sans-serif" },
+                                callback: function(value) {
+                                    if(value >= 1000000) return '$' + (value/1000000).toFixed(1) + 'M';
+                                    if(value >= 1000) return '$' + (value/1000).toFixed(0) + 'k';
+                                    return '$' + value;
+                                }
+                            }
+                        },
+                        x: {
+                            grid: { display: false, drawBorder: false },
+                            ticks: { color: '#64748b', font: { size: 9, family: "'Inter', sans-serif" } }
+                        }
                     }
-                }, 1500);
-
-            } else {
-                descargarICS(evento, startDate, endDate, lugar);
-            }
+                }
+            });
         }
 
         async function cargarShows() {
@@ -392,6 +527,9 @@ END:VCALENDAR`;
                         </div>
                     `;
                 });
+                
+                // Actualizar Dashboard
+                renderizarDashboard();
             } catch (err) { 
                 status.style.display = 'block';
                 status.innerHTML = '<span class="text-red-500 font-bold">Error de conexión. Revisá tu internet.</span>'; 
@@ -485,16 +623,19 @@ END:VCALENDAR`;
             const [y, m, d] = input.split('-');
             const f1 = `${d}/${m}/${y}`;
             const f2 = `${parseInt(d)}/${parseInt(m)}/${y}`;
-            const encontrado = todosLosShows.find(item => {
+            
+            const encontrados = todosLosShows.filter(item => {
                 const k = Object.keys(item).find(x => x.trim().toUpperCase() === 'FECHA');
                 const val = item[k] ? item[k].toString().trim() : "";
                 return val === f1 || val === f2;
             });
+            
             resDiv.classList.remove('hidden');
-            if (encontrado) {
-                resDiv.innerHTML = `<div class="p-4 bg-red-900/30 border border-red-500 rounded-xl text-center"><span class="text-red-500 text-sm font-black uppercase">❌ Ocupado</span><br><span class="text-white text-xs">${encontrado.EVENTO || 'Reservado'}</span></div>`;
+            if (encontrados.length > 0) {
+                let htmlShows = encontrados.map(e => `<div class="text-white text-xs mt-2 bg-black/20 p-2 rounded">• ${e.EVENTO || 'Reservado'} <br><span class="text-cyan-400 font-bold text-[14px]">⏰ ${e.HORA || '?'} hs</span></div>`).join('');
+                resDiv.innerHTML = `<div class="p-4 bg-red-900/30 border border-red-500 rounded-xl text-center shadow-lg"><span class="text-red-500 text-sm font-black uppercase">❌ Día con eventos</span>${htmlShows}</div>`;
             } else {
-                resDiv.innerHTML = `<div class="p-4 bg-emerald-900/30 border border-emerald-500 rounded-xl text-center"><span class="text-emerald-400 text-sm font-black uppercase">✅ Disponible</span></div>`;
+                resDiv.innerHTML = `<div class="p-4 bg-emerald-900/30 border border-emerald-500 rounded-xl text-center shadow-lg"><span class="text-emerald-400 text-sm font-black uppercase">✅ Totalmente Disponible</span></div>`;
             }
         }
 
