@@ -27,9 +27,48 @@
             bottom: 0;
             opacity: 0;
         }
+
+        /* CALENDARIO */
+        .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+        .cal-day { aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 12px; font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.2s; position: relative; }
+        .cal-day:hover { transform: scale(1.05); }
+        .cal-day.vacio { visibility: hidden; }
+        .cal-day.hoy { box-shadow: 0 0 0 2px #06b6d4; }
+        .cal-day.con-evento { background: linear-gradient(135deg, rgba(16,185,129,0.25), rgba(6,182,212,0.15)); color: #34d399; }
+        .cal-day.con-evento::after { content: ''; position: absolute; bottom: 4px; width: 5px; height: 5px; background: #10b981; border-radius: 50%; }
+        .cal-day.finde-libre { background: rgba(99, 102, 241, 0.12); color: #818cf8; }
+        .cal-day.normal { background: rgba(30, 41, 59, 0.5); color: #94a3b8; }
+        .cal-day.pasado { opacity: 0.4; }
+        .cal-header-day { text-align: center; font-size: 10px; font-weight: 900; color: #475569; text-transform: uppercase; letter-spacing: 0.1em; padding: 4px 0; }
+
+        /* MODAL */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); z-index: 50; display: none; align-items: center; justify-content: center; padding: 16px; }
+        .modal-overlay.activo { display: flex; }
+        .modal-box { background: #1e293b; border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 24px; width: 100%; max-width: 380px; box-shadow: 0 25px 50px rgba(0,0,0,0.5); }
+        .estado-btn { transition: all 0.2s; }
+        .estado-btn:active { transform: scale(0.95); }
     </style>
 </head>
 <body class="p-4 max-w-md mx-auto mb-20">
+
+    <!-- MODAL CANCELAR/SUSPENDER -->
+    <div id="modal-estado" class="modal-overlay">
+        <div class="modal-box">
+            <h3 class="text-sm font-black text-red-400 uppercase tracking-widest mb-1">Cancelar Show</h3>
+            <p id="modal-nombre-show" class="text-white font-bold text-lg mb-4"></p>
+            <p class="text-[10px] text-slate-400 uppercase tracking-widest font-bold mb-3">¿Cuál es el motivo?</p>
+            <div class="space-y-2 mb-4">
+                <button onclick="confirmarEstado('SUSPENDIDO')" class="estado-btn w-full bg-red-900/30 border border-red-500/40 text-red-400 py-3 rounded-xl font-bold text-xs uppercase tracking-wider hover:bg-red-900/50">🚫 Suspendido</button>
+                <button onclick="confirmarEstado('CANCELADO')" class="estado-btn w-full bg-orange-900/30 border border-orange-500/40 text-orange-400 py-3 rounded-xl font-bold text-xs uppercase tracking-wider hover:bg-orange-900/50">❌ Cancelado por el cliente</button>
+                <button onclick="confirmarEstado('REPROGRAMADO')" class="estado-btn w-full bg-yellow-900/30 border border-yellow-500/40 text-yellow-400 py-3 rounded-xl font-bold text-xs uppercase tracking-wider hover:bg-yellow-900/50">🔄 Reprogramado</button>
+                <button onclick="confirmarEstadoPersonalizado()" class="estado-btn w-full bg-slate-800 border border-slate-600 text-slate-300 py-3 rounded-xl font-bold text-xs uppercase tracking-wider hover:bg-slate-700">✏️ Otro motivo...</button>
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+                <button onclick="cerrarModalEstado()" class="bg-slate-700 text-slate-300 py-3 rounded-xl font-bold text-xs uppercase tracking-widest">Volver</button>
+                <button onclick="eliminarDefinitivo()" class="bg-slate-900 text-red-500 py-3 rounded-xl font-bold text-[10px] uppercase tracking-widest border border-red-900/30">🗑️ Borrar del todo</button>
+            </div>
+        </div>
+    </div>
 
     <header class="mb-6 text-center">
         <h1 class="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500 italic uppercase tracking-tighter">Agenda Papá 🎸</h1>
@@ -43,7 +82,10 @@
             <button onclick="toggleForm()" class="bg-emerald-600 text-white py-3 rounded-xl font-bold text-[11px] uppercase tracking-widest shadow-lg shadow-emerald-900/40 transition-transform active:scale-95">➕ Nuevo Show</button>
             <button onclick="cambiarVista('historial')" class="bg-slate-700 text-white py-3 rounded-xl font-bold text-[11px] uppercase tracking-widest transition-transform active:scale-95">📂 Ver Historial</button>
         </div>
-        <button onclick="cambiarVista('resumen')" class="w-full bg-cyan-900 text-white py-3 mb-6 rounded-xl font-bold text-[11px] uppercase tracking-widest shadow-lg shadow-cyan-900/40 transition-transform active:scale-95 border border-cyan-700">📊 Resumen Financiero</button>
+        <div class="grid grid-cols-2 gap-3 mb-6">
+            <button onclick="cambiarVista('calendario')" class="bg-indigo-700 text-white py-3 rounded-xl font-bold text-[11px] uppercase tracking-widest shadow-lg shadow-indigo-900/40 transition-transform active:scale-95">📅 Ver Calendario</button>
+            <button onclick="cambiarVista('resumen')" class="bg-cyan-900 text-white py-3 rounded-xl font-bold text-[11px] uppercase tracking-widest shadow-lg shadow-cyan-900/40 transition-transform active:scale-95 border border-cyan-700">📊 Resumen</button>
+        </div>
 
         <section id="seccion-form" class="card p-5 mb-6 border-emerald-500/30 border hidden">
             <div class="flex justify-between items-center mb-4">
@@ -116,6 +158,47 @@
         <div id="lista-pasados" class="space-y-4"></div>
     </div>
 
+    <div id="vista-calendario" class="hidden">
+        <button onclick="cambiarVista('principal')" class="mb-6 flex items-center text-cyan-400 font-bold text-sm bg-slate-800/50 py-2 px-4 rounded-xl transition-transform active:scale-95 border border-cyan-900/50">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+            Volver a la Agenda
+        </button>
+        <h2 class="text-xl font-black text-indigo-400 uppercase tracking-tighter mb-4">Calendario de Shows</h2>
+
+        <div class="flex items-center justify-between mb-5">
+            <button onclick="navegarCalendario(-1)" class="bg-slate-800 p-2 rounded-xl border border-slate-700 transition-transform active:scale-90">
+                <svg class="w-5 h-5 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+            </button>
+            <div class="text-center">
+                <span id="cal-mes-titulo" class="text-lg font-black text-white uppercase tracking-wider"></span>
+            </div>
+            <button onclick="navegarCalendario(1)" class="bg-slate-800 p-2 rounded-xl border border-slate-700 transition-transform active:scale-90">
+                <svg class="w-5 h-5 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+            </button>
+        </div>
+
+        <div class="card p-4 mb-4 border border-slate-700/50 shadow-lg">
+            <div class="cal-grid mb-2">
+                <div class="cal-header-day">Lun</div>
+                <div class="cal-header-day">Mar</div>
+                <div class="cal-header-day">Mié</div>
+                <div class="cal-header-day">Jue</div>
+                <div class="cal-header-day">Vie</div>
+                <div class="cal-header-day" style="color:#6366f1">Sáb</div>
+                <div class="cal-header-day" style="color:#6366f1">Dom</div>
+            </div>
+            <div id="cal-grid-dias" class="cal-grid"></div>
+        </div>
+
+        <div class="grid grid-cols-3 gap-2 mb-5">
+            <div class="flex items-center gap-2 text-[10px] text-slate-400 font-bold uppercase"><span class="w-3 h-3 rounded-full bg-emerald-500/40 inline-block"></span> Con Show</div>
+            <div class="flex items-center gap-2 text-[10px] text-slate-400 font-bold uppercase"><span class="w-3 h-3 rounded-full bg-indigo-500/30 inline-block"></span> Finde Libre</div>
+            <div class="flex items-center gap-2 text-[10px] text-slate-400 font-bold uppercase"><span class="w-3 h-3 rounded-full inline-block" style="box-shadow: 0 0 0 2px #06b6d4"></span> Hoy</div>
+        </div>
+
+        <div id="cal-detalle-dia" class="hidden mb-4"></div>
+    </div>
+
     <div id="vista-resumen" class="hidden">
         <button onclick="cambiarVista('principal')" class="mb-6 flex items-center text-cyan-400 font-bold text-sm bg-slate-800/50 py-2 px-4 rounded-xl transition-transform active:scale-95 border border-cyan-900/50">
             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
@@ -182,12 +265,16 @@
             document.getElementById('vista-principal').classList.add('hidden');
             document.getElementById('vista-historial').classList.add('hidden');
             document.getElementById('vista-resumen').classList.add('hidden');
+            document.getElementById('vista-calendario').classList.add('hidden');
 
             if (vista === 'historial') {
                 document.getElementById('vista-historial').classList.remove('hidden');
             } else if (vista === 'resumen') {
                 document.getElementById('vista-resumen').classList.remove('hidden');
-                renderizarDashboard(); // Asegura que el gráfico se redimensione bien al mostrarse
+                renderizarDashboard();
+            } else if (vista === 'calendario') {
+                document.getElementById('vista-calendario').classList.remove('hidden');
+                renderizarCalendario();
             } else {
                 document.getElementById('vista-principal').classList.remove('hidden');
             }
@@ -526,6 +613,7 @@
                         lugar: getVal('LUGAR'), contacto: getVal('CONTACTO'), tel: getVal('TELEFONO'),
                         total: limpiarPlata(getVal('TOTAL')), 
                         pagado: limpiarPlata(getVal('PAGADO')),
+                        estado: getVal('ESTADO'),
                     };
                     if(!s.evento) return;
                     const p = s.fecha.split('/');
@@ -533,16 +621,22 @@
                     const fechaShow = new Date(p[2], p[1] - 1, p[0]);
                     const pendiente = s.total - s.pagado;
                     const porcentaje = s.total > 0 ? (s.pagado / s.total) * 100 : 0;
+                    const estaCancelado = s.estado && s.estado.trim() !== '';
 
-                    const botonPagoHTML = pendiente > 0 
+                    const etiquetaEstadoHTML = estaCancelado
+                        ? `<div class="mb-3 inline-flex items-center gap-1.5 bg-red-900/30 border border-red-500/40 text-red-400 text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg">🚫 ${s.estado}</div>`
+                        : '';
+
+                    const botonPagoHTML = (!estaCancelado && pendiente > 0) 
                         ? `<button data-evento="${s.evento.replace(/"/g, '&quot;')}" onclick="sumarPago(this.getAttribute('data-evento'), ${s.pagado}, ${s.total})" class="mt-3 w-full bg-slate-800 text-emerald-400 border border-emerald-900/50 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-transform active:scale-95">💰 Registrar Pago</button>`
                         : '';
 
                     const cardHTML = `
-                        <div class="card p-5 shadow-2xl relative overflow-hidden">
+                        <div class="card p-5 shadow-2xl relative overflow-hidden ${estaCancelado ? 'opacity-70' : ''}">
+                            ${estaCancelado ? '<div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-red-500 to-red-900"></div>' : ''}
                             <div class="flex justify-between items-start mb-3">
                                 <div class="max-w-[80%]">
-                                    <h3 class="font-black text-white uppercase text-lg leading-tight tracking-tight">${s.evento}</h3>
+                                    <h3 class="font-black text-white uppercase text-lg leading-tight tracking-tight ${estaCancelado ? 'line-through text-slate-400' : ''}">${s.evento}</h3>
                                     <p class="text-cyan-400 text-[11px] font-bold mt-1">📍 ${s.lugar || 'Sin ubicación'}</p>
                                 </div>
                                 <div class="flex gap-1">
@@ -554,6 +648,7 @@
                                     </button>
                                 </div>
                             </div>
+                            ${etiquetaEstadoHTML}
                             <div class="flex items-center text-slate-400 text-xs mb-5 font-medium">
                                 📅 ${s.fecha} | ⏰ ${s.hora} ${s.contacto ? '| 👤 ' + s.contacto : ''}
                             </div>
@@ -580,7 +675,19 @@
                         </div>
                     `;
 
-                    if (fechaShow >= hoy) { listProx.innerHTML += cardHTML; } 
+                    if (estaCancelado) {
+                        // Shows cancelados/suspendidos van al historial
+                        const nombreMes = fechaShow.toLocaleString('es-ES', { month: 'long', year: 'numeric' });
+                        if (!showsPasadosPorMes[nombreMes]) {
+                            showsPasadosPorMes[nombreMes] = [];
+                            mesesOrdenados.push(nombreMes);
+                        }
+                        showsPasadosPorMes[nombreMes].unshift(cardHTML);
+                        // Solo sumar al resumen si hubo pagos
+                        if (s.pagado > 0) {
+                            resumenData[nombreMes] = (resumenData[nombreMes] || 0) + s.pagado;
+                        }
+                    } else if (fechaShow >= hoy) { listProx.innerHTML += cardHTML; } 
                     else {
                         const nombreMes = fechaShow.toLocaleString('es-ES', { month: 'long', year: 'numeric' });
                         if (!showsPasadosPorMes[nombreMes]) {
@@ -654,13 +761,54 @@
             } catch (err) { alert("Error."); }
         }
 
-        async function eliminarShow(nombre) {
-            if (!confirm(`¿Borrar "${nombre}"?`)) return;
+        let showParaCancelar = null;
+
+        function eliminarShow(nombre) {
+            showParaCancelar = nombre;
+            document.getElementById('modal-nombre-show').innerText = nombre;
+            document.getElementById('modal-estado').classList.add('activo');
+        }
+
+        function cerrarModalEstado() {
+            document.getElementById('modal-estado').classList.remove('activo');
+            showParaCancelar = null;
+        }
+
+        async function confirmarEstado(estado) {
+            if (!showParaCancelar) return;
+            document.getElementById('status').style.display = 'block';
             try {
-                const res = await fetch(`${SUPABASE_URL}/rest/v1/shows?EVENTO=eq.${encodeURIComponent(nombre)}`, { 
+                const res = await fetch(`${SUPABASE_URL}/rest/v1/shows?EVENTO=eq.${encodeURIComponent(showParaCancelar)}`, {
+                    method: 'PATCH', headers: API_HEADERS,
+                    body: JSON.stringify({ "ESTADO": estado })
+                });
+                if (res.ok) {
+                    cerrarModalEstado();
+                    alert(`Show marcado como: ${estado}`);
+                    cargarShows();
+                }
+            } catch (err) { alert("Error."); }
+        }
+
+        function confirmarEstadoPersonalizado() {
+            const motivo = prompt('Escribí el motivo:');
+            if (!motivo || !motivo.trim()) return;
+            confirmarEstado(motivo.trim().toUpperCase());
+        }
+
+        async function eliminarDefinitivo() {
+            if (!showParaCancelar) return;
+            if (!confirm(`⚠️ ¿Estás seguro de BORRAR DEFINITIVAMENTE "${showParaCancelar}"?\n\nEsto eliminará todos los datos y pagos registrados.`)) return;
+            document.getElementById('status').style.display = 'block';
+            try {
+                const res = await fetch(`${SUPABASE_URL}/rest/v1/shows?EVENTO=eq.${encodeURIComponent(showParaCancelar)}`, { 
                     method: 'DELETE', headers: API_HEADERS 
                 });
-                if (res.ok) { alert("Show eliminado."); cargarShows(); }
+                if (res.ok) {
+                    cerrarModalEstado();
+                    alert("Show eliminado definitivamente.");
+                    cargarShows();
+                }
             } catch (err) { alert("Error."); }
         }
 
@@ -720,6 +868,151 @@
             } else {
                 resDiv.innerHTML = `<div class="p-4 bg-emerald-900/30 border border-emerald-500 rounded-xl text-center shadow-lg"><span class="text-emerald-400 text-sm font-black uppercase">✅ Totalmente Disponible</span></div>`;
             }
+        }
+
+        // ========== CALENDARIO ==========
+        let calMesActual = new Date().getMonth();
+        let calAnioActual = new Date().getFullYear();
+
+        function navegarCalendario(dir) {
+            calMesActual += dir;
+            if (calMesActual > 11) { calMesActual = 0; calAnioActual++; }
+            if (calMesActual < 0) { calMesActual = 11; calAnioActual--; }
+            renderizarCalendario();
+        }
+
+        function renderizarCalendario() {
+            const mesesNombres = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+            document.getElementById('cal-mes-titulo').innerText = `${mesesNombres[calMesActual]} ${calAnioActual}`;
+
+            const hoy = new Date();
+            hoy.setHours(0,0,0,0);
+
+            // Armar mapa de fechas con eventos
+            const eventosDelMes = {};
+            todosLosShows.forEach(item => {
+                const getVal = (n) => {
+                    const k = Object.keys(item).find(x => x.trim().toUpperCase() === n.toUpperCase());
+                    return item[k] || "";
+                };
+                const fechaStr = getVal('FECHA');
+                if (!fechaStr) return;
+                const p = fechaStr.split('/');
+                if (p.length !== 3) return;
+                const d = parseInt(p[0]), m = parseInt(p[1]), y = parseInt(p[2]);
+                if (m - 1 === calMesActual && y === calAnioActual) {
+                    if (!eventosDelMes[d]) eventosDelMes[d] = [];
+                    eventosDelMes[d].push({
+                        evento: getVal('EVENTO'),
+                        hora: getVal('HORA'),
+                        lugar: getVal('LUGAR'),
+                        contacto: getVal('CONTACTO')
+                    });
+                }
+            });
+
+            // Calcular primer día del mes (Lunes=0)
+            const primerDia = new Date(calAnioActual, calMesActual, 1);
+            const diasEnMes = new Date(calAnioActual, calMesActual + 1, 0).getDate();
+            let diaInicio = primerDia.getDay(); // 0=Dom, 1=Lun...
+            diaInicio = diaInicio === 0 ? 6 : diaInicio - 1; // Convertir a Lun=0
+
+            const grid = document.getElementById('cal-grid-dias');
+            grid.innerHTML = '';
+
+            // Espacios vacíos antes del primer día
+            for (let i = 0; i < diaInicio; i++) {
+                grid.innerHTML += '<div class="cal-day vacio"></div>';
+            }
+
+            // Días del mes
+            for (let dia = 1; dia <= diasEnMes; dia++) {
+                const fechaDia = new Date(calAnioActual, calMesActual, dia);
+                const diaSemana = fechaDia.getDay(); // 0=Dom, 6=Sáb
+                const esFinde = diaSemana === 0 || diaSemana === 6;
+                const tieneEvento = eventosDelMes[dia] && eventosDelMes[dia].length > 0;
+                const esHoy = fechaDia.getTime() === hoy.getTime();
+                const esPasado = fechaDia < hoy;
+
+                let clases = 'cal-day';
+                if (tieneEvento) clases += ' con-evento';
+                else if (esFinde) clases += ' finde-libre';
+                else clases += ' normal';
+                if (esHoy) clases += ' hoy';
+                if (esPasado && !esHoy) clases += ' pasado';
+
+                const cantEventos = tieneEvento ? eventosDelMes[dia].length : 0;
+                const badge = cantEventos > 1 ? `<span style="font-size:8px;position:absolute;top:3px;right:5px;background:#10b981;color:#fff;border-radius:50%;width:14px;height:14px;display:flex;align-items:center;justify-content:center">${cantEventos}</span>` : '';
+
+                grid.innerHTML += `<div class="${clases}" onclick="mostrarDetalleDia(${dia})">${badge}${dia}</div>`;
+            }
+
+            // Ocultar detalle previo
+            document.getElementById('cal-detalle-dia').classList.add('hidden');
+        }
+
+        function mostrarDetalleDia(dia) {
+            const detalle = document.getElementById('cal-detalle-dia');
+            const fechaDia = new Date(calAnioActual, calMesActual, dia);
+            const diaSemana = fechaDia.toLocaleString('es-ES', { weekday: 'long' });
+            const fechaTexto = `${diaSemana} ${dia}/${calMesActual + 1}/${calAnioActual}`;
+
+            // Buscar eventos de ese día
+            const eventos = [];
+            todosLosShows.forEach(item => {
+                const getVal = (n) => {
+                    const k = Object.keys(item).find(x => x.trim().toUpperCase() === n.toUpperCase());
+                    return item[k] || "";
+                };
+                const fechaStr = getVal('FECHA');
+                if (!fechaStr) return;
+                const p = fechaStr.split('/');
+                if (p.length !== 3) return;
+                const d = parseInt(p[0]), m = parseInt(p[1]), y = parseInt(p[2]);
+                if (d === dia && m - 1 === calMesActual && y === calAnioActual) {
+                    eventos.push({
+                        evento: getVal('EVENTO'),
+                        hora: getVal('HORA'),
+                        lugar: getVal('LUGAR'),
+                        contacto: getVal('CONTACTO'),
+                        total: limpiarPlata(getVal('TOTAL')),
+                        pagado: limpiarPlata(getVal('PAGADO'))
+                    });
+                }
+            });
+
+            if (eventos.length === 0) {
+                const esFinde = fechaDia.getDay() === 0 || fechaDia.getDay() === 6;
+                detalle.innerHTML = `
+                    <div class="card p-4 border ${esFinde ? 'border-indigo-500/30' : 'border-slate-700/50'} shadow-lg">
+                        <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">${fechaTexto}</p>
+                        <p class="text-sm ${esFinde ? 'text-indigo-400' : 'text-slate-500'}">${esFinde ? '🎉 Fin de semana libre — ¡sin shows!' : '📭 Sin eventos este día'}</p>
+                    </div>`;
+            } else {
+                let eventosHTML = eventos.map(e => {
+                    const pendiente = e.total - e.pagado;
+                    return `
+                        <div class="bg-slate-800/60 rounded-xl p-3 mt-2">
+                            <h4 class="font-black text-white uppercase text-sm">${e.evento}</h4>
+                            <div class="flex flex-wrap gap-x-4 gap-y-1 mt-1 text-[11px] text-slate-400">
+                                ${e.hora ? '<span>⏰ ' + e.hora + '</span>' : ''}
+                                ${e.lugar ? '<span>📍 ' + e.lugar + '</span>' : ''}
+                                ${e.contacto ? '<span>👤 ' + e.contacto + '</span>' : ''}
+                            </div>
+                            ${e.total > 0 ? '<div class="mt-2 text-[10px] font-black uppercase tracking-widest"><span class="text-emerald-400">Cobrado: $' + e.pagado.toLocaleString('es-AR') + '</span> <span class="text-slate-500 mx-1">|</span> <span class="' + (pendiente > 0 ? 'text-orange-400' : 'text-emerald-400') + '">' + (pendiente > 0 ? 'Debe: $' + pendiente.toLocaleString('es-AR') : '✅ Pagado') + '</span></div>' : ''}
+                        </div>`;
+                }).join('');
+
+                detalle.innerHTML = `
+                    <div class="card p-4 border border-emerald-500/30 shadow-lg">
+                        <p class="text-xs font-bold text-emerald-400 uppercase tracking-widest mb-1">🎸 ${fechaTexto}</p>
+                        <p class="text-[10px] text-slate-500 uppercase font-bold">${eventos.length} evento${eventos.length > 1 ? 's' : ''}</p>
+                        ${eventosHTML}
+                    </div>`;
+            }
+
+            detalle.classList.remove('hidden');
+            detalle.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
 
         cargarShows();
