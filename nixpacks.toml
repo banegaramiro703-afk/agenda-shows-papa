@@ -1,0 +1,11 @@
+﻿[providers]
+node = "node"
+
+[phases.setup]
+nixPkgs = ["nodejs"]
+
+[build]
+cmd = "npm install"
+
+[start]
+cmd = "node server.js"
