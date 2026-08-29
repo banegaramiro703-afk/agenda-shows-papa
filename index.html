@@ -675,7 +675,7 @@
 
                     if (estaCancelado) {
                         // Shows cancelados/suspendidos van al historial
-                        const nombreMes = fechaObj.toLocaleString('es-ES', { month: 'long', year: 'numeric' });
+                        const nombreMes = fechaShow.toLocaleString('es-ES', { month: 'long', year: 'numeric' });
                         if (!showsPasadosPorMes[nombreMes]) {
                             showsPasadosPorMes[nombreMes] = [];
                             mesesOrdenados.push(nombreMes);
@@ -685,9 +685,9 @@
                         if (s.pagado > 0) {
                             resumenData[nombreMes] = (resumenData[nombreMes] || 0) + s.pagado;
                         }
-                    } else if (fechaObj >= hoy) { listProx.innerHTML += cardHTML; } 
+                    } else if (fechaShow >= hoy) { listProx.innerHTML += cardHTML; } 
                     else {
-                        const nombreMes = fechaObj.toLocaleString('es-ES', { month: 'long', year: 'numeric' });
+                        const nombreMes = fechaShow.toLocaleString('es-ES', { month: 'long', year: 'numeric' });
                         if (!showsPasadosPorMes[nombreMes]) {
                             showsPasadosPorMes[nombreMes] = [];
                             mesesOrdenados.push(nombreMes);
