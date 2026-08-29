@@ -704,7 +704,7 @@
                             <button onclick="document.getElementById('${idMes}').classList.toggle('hidden'); document.getElementById('icon-${idMes}').classList.toggle('rotate-180')" class="w-full resumen-card p-4 rounded-xl flex justify-between items-center shadow-lg transition-transform active:scale-95">
                                 <span class="text-xs font-black uppercase text-slate-300 tracking-widest">${mes}</span>
                                 <div class="flex items-center gap-3">
-                                    <span class="text-cyan-400 font-black text-lg">$${resumenData[mes].toLocaleString('es-AR')}</span>
+                                    <span class="text-cyan-400 font-black text-lg">$${(resumenData[mes] || 0).toLocaleString('es-AR')}</span>
                                     <svg id="icon-${idMes}" class="w-5 h-5 text-slate-400 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                                 </div>
                             </button>
