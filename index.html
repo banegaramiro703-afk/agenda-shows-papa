@@ -459,7 +459,7 @@
                     if (!gananciasPorMes[labelSemana]) gananciasPorMes[labelSemana] = 0;
                     gananciasPorMes[labelSemana] += pagado;
                 } else {
-                    const mesNombre = fechaObj.toLocaleString('es-ES', { month: 'short' });
+                    const mesNombre = fechaShow.toLocaleString('es-ES', { month: 'short' });
                     const labelMes = `${mesNombre} ${y}`.toUpperCase().replace('.', ''); 
                     if (!gananciasPorMes[labelMes]) gananciasPorMes[labelMes] = 0;
                     gananciasPorMes[labelMes] += pagado;
@@ -1017,6 +1017,7 @@
     </script>
 </body>
 </html>
+
 
 
 
