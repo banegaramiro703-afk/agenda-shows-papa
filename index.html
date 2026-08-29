@@ -720,7 +720,7 @@
                 renderizarDashboard();
             } catch (err) { 
                 status.style.display = 'block';
-                status.innerHTML = '<span class="text-red-500 font-bold">Error de conexión. Revisá tu internet.</span>'; 
+                status.innerHTML = `<span class='text-red-500 font-bold'>Error: ${err.message || err}</span>`; 
             }
         }
 
@@ -1017,5 +1017,6 @@
     </script>
 </body>
 </html>
+
 
 
