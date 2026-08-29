@@ -1,0 +1,24 @@
+﻿{
+  "name": "agenda-shows-papa",
+  "version": "1.0.0",
+  "description": "Agenda de Shows - Papa",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/banegaramiro703-afk/agenda-shows-papa.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.21.2",
+    "pg": "^8.16.0"
+  }
+}

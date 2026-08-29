@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -250,12 +250,10 @@
     </div>
 
     <script>
-        const SUPABASE_URL = 'https://gcvjzmhlbiptqjtuydfp.supabase.co';
-        const SUPABASE_KEY = 'sb_publishable_tglkpS_UxdhC8cLpNw9vTg_DSDzJC5k';
+        const API_URL = '';
+        // Usando API propia en Railway (sin Supabase)
         const API_HEADERS = {
             'Content-Type': 'application/json',
-            'apikey': SUPABASE_KEY,
-            'Authorization': `Bearer ${SUPABASE_KEY}`
         };
         
         let todosLosShows = [];
@@ -570,7 +568,7 @@
             const listPasados = document.getElementById('lista-pasados');
             
             try {
-                const response = await fetch(`${SUPABASE_URL}/rest/v1/shows`, { headers: API_HEADERS });
+                const response = await fetch(`${API_URL}/api/shows`, { headers: API_HEADERS });
                 todosLosShows = await response.json();
                 
                 if (todosLosShows.error || !Array.isArray(todosLosShows) || todosLosShows.length === 0) {
@@ -734,7 +732,7 @@
             if (!confirm(`¿Cambiar el precio total a $${nuevoTotal.toLocaleString('es-AR')}?`)) return;
             document.getElementById('status').style.display = 'block';
             try {
-                const res = await fetch(`${SUPABASE_URL}/rest/v1/shows?EVENTO=eq.${encodeURIComponent(nombre)}`, {
+                const res = await fetch(`${API_URL}/api/shows/${encodeURIComponent(nombre)}`, {
                     method: 'PATCH', headers: API_HEADERS,
                     body: JSON.stringify({ "TOTAL": nuevoTotal.toString() })
                 });
@@ -753,7 +751,7 @@
             if (!confirm(`¿Registrar pago de $${montoIngresado.toLocaleString('es-AR')}?`)) return;
             document.getElementById('status').style.display = 'block';
             try {
-                const res = await fetch(`${SUPABASE_URL}/rest/v1/shows?EVENTO=eq.${encodeURIComponent(nombre)}`, {
+                const res = await fetch(`${API_URL}/api/shows/${encodeURIComponent(nombre)}`, {
                     method: 'PATCH', headers: API_HEADERS,
                     body: JSON.stringify({ "PAGADO": nuevoTotalPagado.toString() })
                 });
@@ -778,7 +776,7 @@
             if (!showParaCancelar) return;
             document.getElementById('status').style.display = 'block';
             try {
-                const res = await fetch(`${SUPABASE_URL}/rest/v1/shows?EVENTO=eq.${encodeURIComponent(showParaCancelar)}`, {
+                const res = await fetch(`${API_URL}/api/shows/${encodeURIComponent(showParaCancelar)}`, {
                     method: 'PATCH', headers: API_HEADERS,
                     body: JSON.stringify({ "ESTADO": estado })
                 });
@@ -801,7 +799,7 @@
             if (!confirm(`⚠️ ¿Estás seguro de BORRAR DEFINITIVAMENTE "${showParaCancelar}"?\n\nEsto eliminará todos los datos y pagos registrados.`)) return;
             document.getElementById('status').style.display = 'block';
             try {
-                const res = await fetch(`${SUPABASE_URL}/rest/v1/shows?EVENTO=eq.${encodeURIComponent(showParaCancelar)}`, { 
+                const res = await fetch(`${API_URL}/api/shows/${encodeURIComponent(showParaCancelar)}`, { 
                     method: 'DELETE', headers: API_HEADERS 
                 });
                 if (res.ok) {
@@ -831,13 +829,13 @@
             };
             try {
                 if (editandoNombreOriginal) {
-                    const res = await fetch(`${SUPABASE_URL}/rest/v1/shows?EVENTO=eq.${encodeURIComponent(editandoNombreOriginal)}`, {
+                    const res = await fetch(`${API_URL}/api/shows/${encodeURIComponent(editandoNombreOriginal)}`, {
                         method: 'PATCH', headers: API_HEADERS,
                         body: JSON.stringify(nuevoShow)
                     });
                     if (res.ok) { cancelarEdicion(); cargarShows(); }
                 } else {
-                    const res = await fetch(`${SUPABASE_URL}/rest/v1/shows`, {
+                    const res = await fetch(`${API_URL}/api/shows`, {
                         method: 'POST', headers: API_HEADERS,
                         body: JSON.stringify(nuevoShow)
                     });
@@ -1019,3 +1017,4 @@
     </script>
 </body>
 </html>
+
