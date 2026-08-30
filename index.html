@@ -497,8 +497,9 @@
 
             const datosOrdenados = labelsOrdenados.map(label => gananciasPorMes[label]);
 
-            const ctx = document.getElementById('chartEvolucion').getContext('2d');
-            if (miGrafico) miGrafico.destroy();
+            try {
+if (typeof Chart === 'undefined') return;
+
 
             let gradient = ctx.createLinearGradient(0, 0, 0, 400);
             gradient.addColorStop(0, 'rgba(16, 185, 129, 0.4)');
@@ -1017,6 +1018,7 @@
     </script>
 </body>
 </html>
+
 
 
 
