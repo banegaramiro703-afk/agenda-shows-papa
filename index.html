@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -415,7 +415,8 @@
 
             let cobradoTotal = 0;
             let pendienteTotal = 0;
-            let cantidadShows = 0;
+            let cantidadRealizados = 0;
+            let cantidadProximos = 0;
             let gananciasPorMes = {};
 
             todosLosShows.forEach(item => {
@@ -449,7 +450,16 @@
 
                 cobradoTotal += pagado;
                 pendienteTotal += pendiente;
-                cantidadShows++;
+                
+                // Excluir suspendidos/cancelados de la cuenta visual de "shows realizados"
+                const estaCancelado = getVal('ESTADO').toUpperCase().includes('SUSPENDIDO') || getVal('ESTADO').toUpperCase().includes('CANCELADO');
+                if (!estaCancelado) {
+                    if (fechaShow < hoy) {
+                        cantidadRealizados++;
+                    } else {
+                        cantidadProximos++;
+                    }
+                }
 
                 const esMesEspecifico = filtro !== 'todo' && filtro !== 'anio';
 
@@ -1022,6 +1032,7 @@
     </script>
 </body>
 </html>
+
 
 
 
