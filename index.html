@@ -232,10 +232,16 @@
             <div class="card p-4 shadow-lg border border-cyan-900/50 relative overflow-hidden mb-4">
                 <div class="absolute -right-4 -top-4 w-12 h-12 bg-cyan-500/20 rounded-full blur-xl"></div>
                 <div class="flex justify-between items-center">
-                    <div>
-                        <p class="text-[10px] text-slate-400 uppercase tracking-widest font-bold mb-1">Total de Shows</p>
-                        <p id="dash-shows" class="text-cyan-400 font-black text-lg">0</p>
-                    </div>
+                    <div class="flex gap-4 sm:gap-8">
+                          <div>
+                              <p class="text-[10px] text-slate-400 uppercase tracking-widest font-bold mb-1">Realizados</p>
+                              <p id="dash-shows-realizados" class="text-cyan-400 font-black text-lg">0</p>
+                          </div>
+                          <div class="border-l border-slate-700/50 pl-4 sm:pl-6">
+                              <p class="text-[10px] text-slate-400 uppercase tracking-widest font-bold mb-1">Próximos</p>
+                              <p id="dash-shows-proximos" class="text-indigo-400 font-black text-lg">0</p>
+                          </div>
+                      </div>
                     <div class="w-10 h-10 bg-cyan-900/30 rounded-xl flex items-center justify-center text-cyan-400 text-xl">🎸</div>
                 </div>
             </div>
@@ -1035,6 +1041,7 @@
     </script>
 </body>
 </html>
+
 
 
 
