@@ -478,7 +478,10 @@
 
             document.getElementById('dash-cobrado').innerText = `$${cobradoTotal.toLocaleString('es-AR')}`;
             document.getElementById('dash-pendiente').innerText = `$${pendienteTotal.toLocaleString('es-AR')}`;
-            document.getElementById('dash-shows').innerText = cantidadShows;
+            if (document.getElementById('dash-shows-realizados')) {
+                document.getElementById('dash-shows-realizados').innerText = cantidadRealizados;
+                document.getElementById('dash-shows-proximos').innerText = cantidadProximos;
+            }
 
             const esMesEspecifico = filtro !== 'todo' && filtro !== 'anio';
             let labelsOrdenados = [];
@@ -1032,6 +1035,7 @@
     </script>
 </body>
 </html>
+
 
 
 
